@@ -16,7 +16,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- Font Noto Sans Thai & Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -32,139 +32,124 @@
             width: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 6px;
+            background: #f8fafc;
+            border-radius: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #cbd5e1;
-            border-radius: 6px;
-            border: 2px solid #f1f5f9;
+            border-radius: 8px;
+            border: 2px solid #f8fafc;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800">
+<body class="bg-slate-50 text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
 
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useMemo } = React;
 
-        // --- Icons Components ---
-        const Search = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        );
-        const Filter = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-        );
-        const AlertTriangle = ({ className, classNamePath }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" className={classNamePath}/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-        );
-        const Package = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22.08V12"/></svg>
-        );
-        const ArrowUp = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
-        );
-        const ArrowDown = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
-        );
-        const ArrowUpDown = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
-        );
+        // --- Icons Components (Inline SVG replacing lucide-react) ---
+        const Search = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>);
+        const Filter = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>);
+        const AlertTriangle = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>);
+        const Package = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22.08V12"/></svg>);
+        const ArrowUp = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>);
+        const ArrowDown = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>);
+        const ArrowUpDown = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>);
+        const BarChart3 = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/></svg>);
+        const CheckCircle2 = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>);
+        const AlertOctagon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>);
 
-        // --- Data (Fully Verified & Corrected 6M Usage + Latest Stock for 1/4/2026) ---
+        // --- Data (Verified with 3/4/2026, History = [Mar'69, Feb'69, Jan'69, Dec'68, Nov'68, Oct'68]) ---
+        const MONTH_LABELS = ['มี.ค. 69', 'ก.พ. 69', 'ม.ค. 69', 'ธ.ค. 68', 'พ.ย. 68', 'ต.ค. 68'];
+
         const INITIAL_DATA = [
-            { id: 1, model: '13F-WB', warehouse: 75, ready: 10, defect: 55, floating: 0, midMonth: 0, usage6m: 88, leadTime: 3 },
-            { id: 2, model: '13F-W', warehouse: 132, ready: 6, defect: 45, floating: 0, midMonth: 0, usage6m: 120, leadTime: 3 },
-            { id: 3, model: '20AF', warehouse: 236, ready: 8, defect: 13, floating: 1, midMonth: 0, usage6m: 338, leadTime: 3 },
-            { id: 4, model: '20YLR', warehouse: 0, ready: 0, defect: 1, floating: 0, midMonth: 0, usage6m: 1, leadTime: 3 }, // Fixed: Usage 6M is 1 (Oct '68)
-            { id: 5, model: '12A-BU', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 6, model: '12A-RE', warehouse: 0, ready: 0, defect: 30, floating: 0, midMonth: 0, usage6m: 19, leadTime: 3 },
-            { id: 7, model: '15AF', warehouse: 146, ready: 10, defect: 9, floating: 0, midMonth: 0, usage6m: 64, leadTime: 3 },
-            { id: 8, model: 'ULKA 50', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 9, model: '38F', warehouse: 42, ready: 3, defect: 2, floating: 0, midMonth: 0, usage6m: 71, leadTime: 3 },
-            { id: 10, model: '45F', warehouse: 71, ready: 5, defect: 22, floating: 0, midMonth: 0, usage6m: 110, leadTime: 3 },
-            { id: 11, model: '65S', warehouse: 33, ready: 4, defect: 15, floating: 0, midMonth: 0, usage6m: 63, leadTime: 3 },
-            { id: 12, model: '120F', warehouse: 23, ready: 4, defect: 6, floating: 0, midMonth: 0, usage6m: 71, leadTime: 3 },
-            { id: 13, model: '45M', warehouse: 17, ready: 8, defect: 4, floating: 0, midMonth: 0, usage6m: 19, leadTime: 3 },
-            { id: 14, model: 'CABIN', warehouse: 9, ready: 13, defect: 0, floating: 0, midMonth: 0, usage6m: 26, leadTime: 3 },
-            { id: 15, model: '220F', warehouse: 6, ready: 1, defect: 4, floating: 0, midMonth: 0, usage6m: 16, leadTime: 3 },
-            { id: 16, model: '350F', warehouse: 5, ready: 7, defect: 0, floating: 0, midMonth: 0, usage6m: 8, leadTime: 3 },
-            { id: 17, model: '9CN', warehouse: 70, ready: 12, defect: 1, floating: 0, midMonth: 0, usage6m: 63, leadTime: 3 },
-            { id: 18, model: '07S', warehouse: 75, ready: 4, defect: 1, floating: 0, midMonth: 0, usage6m: 133, leadTime: 3 },
-            { id: 19, model: '006C', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 20, model: 'S72C', warehouse: 50, ready: 7, defect: 0, floating: 0, midMonth: 0, usage6m: 32, leadTime: 3 },
-            { id: 21, model: 'S9C', warehouse: 98, ready: 4, defect: 2, floating: 0, midMonth: 0, usage6m: 150, leadTime: 3 },
-            { id: 22, model: 'S9H', warehouse: 0, ready: 4, defect: 0, floating: 0, midMonth: 0, usage6m: 1, leadTime: 3 },
-            { id: 23, model: 'XJ-100', warehouse: 6, ready: 4, defect: 0, floating: 0, midMonth: 0, usage6m: 4, leadTime: 3 },
-            { id: 24, model: 'XJ-1400A', warehouse: 3, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 2, leadTime: 3 },
-            { id: 25, model: 'CABIN-XJ1400A', warehouse: 3, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 2, leadTime: 3 },
-            { id: 26, model: 'XJ-500A', warehouse: 3, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 27, model: 'CABIN-XJ500A', warehouse: 2, ready: 1, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 28, model: 'XJ-150A', warehouse: 2, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 29, model: 'MC13D', warehouse: 26, ready: 10, defect: 0, floating: 0, midMonth: 0, usage6m: 11, leadTime: 3 },
-            { id: 30, model: 'M7A', warehouse: 95, ready: 4, defect: 2, floating: 0, midMonth: 0, usage6m: 85, leadTime: 3 },
-            { id: 31, model: 'K7-B', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 32, model: 'FE-151', warehouse: 33, ready: 8, defect: 2, floating: 0, midMonth: 0, usage6m: 31, leadTime: 3 },
-            { id: 33, model: 'FE-302', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 3, leadTime: 3 },
-            { id: 34, model: 'FE-301', warehouse: 39, ready: 3, defect: 2, floating: 0, midMonth: 0, usage6m: 115, leadTime: 3 },
-            { id: 35, model: 'FE-401', warehouse: 3, ready: 6, defect: 3, floating: 0, midMonth: 0, usage6m: 36, leadTime: 3 },
-            { id: 36, model: 'FE-801', warehouse: 9, ready: 1, defect: 2, floating: 0, midMonth: 0, usage6m: 2, leadTime: 3 },
-            { id: 37, model: 'Prosoda', warehouse: 7, ready: 3, defect: 4, floating: 0, midMonth: 0, usage6m: 101, leadTime: 1.5 },
-            { id: 38, model: 'XJ-700', warehouse: 6, ready: 2, defect: 1, floating: 0, midMonth: 0, usage6m: 1, leadTime: 3 },
-            { id: 39, model: 'CABIN-XJ700', warehouse: 9, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 1, leadTime: 3 },
-            { id: 40, model: 'XJ-1121 (ตู้แช่ฝากระจก)', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 41, model: 'XJ-1221 (ตู้แช่ฝาสแตนเลส)', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 42, model: 'U5', warehouse: 9, ready: 7, defect: 4, floating: 0, midMonth: 0, usage6m: 89, leadTime: 1.5 },
-            { id: 43, model: 'RO-A4', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 1, leadTime: 1.5 },
-            { id: 44, model: 'P3B', warehouse: 17, ready: 6, defect: 0, floating: 0, midMonth: 0, usage6m: 85, leadTime: 1.5 },
-            { id: 45, model: 'PROSODA-MAX', warehouse: 20, ready: 5, defect: 3, floating: 0, midMonth: 0, usage6m: 64, leadTime: 1.5 },
-            { id: 46, model: 'RO-G600', warehouse: 42, ready: 4, defect: 6, floating: 0, midMonth: 0, usage6m: 123, leadTime: 3 },
-            { id: 47, model: 'Bleander', warehouse: 16, ready: 2, defect: 1, floating: 0, midMonth: 0, usage6m: 53, leadTime: 1.5 },
-            { id: 48, model: 'Blender-2A', warehouse: 42, ready: 6, defect: 0, floating: 0, midMonth: 0, usage6m: 26, leadTime: 1.5 },
-            { id: 49, model: 'Blender-2B', warehouse: 0, ready: 1, defect: 0, floating: 0, midMonth: 0, usage6m: 26, leadTime: 1.5 },
-            { id: 50, model: 'SA53', warehouse: 0, ready: 1, defect: 0, floating: 0, midMonth: 0, usage6m: 2, leadTime: 3 },
-            { id: 51, model: 'SA56', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 52, model: 'T100', warehouse: 16, ready: 3, defect: 0, floating: 0, midMonth: 0, usage6m: 2, leadTime: 3 },
-            { id: 53, model: 'M97A', warehouse: 0, ready: 1, defect: 0, floating: 0, midMonth: 0, usage6m: 3, leadTime: 3 },
-            { id: 54, model: 'M6A', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 3, leadTime: 3 },
-            { id: 55, model: 'HZBY-12', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 1, leadTime: 3 },
-            { id: 56, model: 'HZB15YLR (BLACK)', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 57, model: 'PROSODA-MAX (V.Mix)', warehouse: 46, ready: 4, defect: 0, floating: 0, midMonth: 0, usage6m: 7, leadTime: 3 },
-            { id: 58, model: 'PROSODA (V.Mix)', warehouse: 0, ready: 0, defect: 1, floating: 0, midMonth: 0, usage6m: 8, leadTime: 3 },
-            { id: 59, model: 'EM860', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 60, model: 'EM830', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 61, model: 'เครื่อง TEMP ผงกาแฟ', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 62, model: 'FE351', warehouse: 0, ready: 5, defect: 0, floating: 0, midMonth: 0, usage6m: 5, leadTime: 3 },
-            { id: 63, model: 'FE451', warehouse: 9, ready: 1, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 64, model: 'HXR-18', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 65, model: 'HBQL-T30', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
-            { id: 66, model: 'NEW-Blender 8001', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, usage6m: 0, leadTime: 3 },
+            { id: 1, model: '13F-WB', warehouse: 74, ready: 8, defect: 55, floating: 0, midMonth: 0, history: [21, 14, 18, 12, 13, 10], leadTime: 3 },
+            { id: 2, model: '13F-W', warehouse: 132, ready: 5, defect: 46, floating: 0, midMonth: 0, history: [42, 22, 18, 18, 9, 11], leadTime: 3 },
+            { id: 3, model: '20AF', warehouse: 223, ready: 12, defect: 13, floating: 1, midMonth: 0, history: [90, 57, 61, 50, 40, 40], leadTime: 3 },
+            { id: 4, model: '20YLR', warehouse: 0, ready: 0, defect: 1, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 1], leadTime: 3 },
+            { id: 5, model: '12A-BU', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 6, model: '12A-RE', warehouse: 0, ready: 0, defect: 30, floating: 0, midMonth: 0, history: [3, 1, 1, 6, 6, 2], leadTime: 3 },
+            { id: 7, model: '15AF', warehouse: 146, ready: 8, defect: 9, floating: 0, midMonth: 0, history: [31, 11, 6, 3, 5, 8], leadTime: 3 },
+            { id: 8, model: 'ULKA 50', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 9, model: '38F', warehouse: 38, ready: 5, defect: 3, floating: 0, midMonth: 0, history: [21, 13, 13, 9, 8, 7], leadTime: 3 },
+            { id: 10, model: '45F', warehouse: 71, ready: 5, defect: 22, floating: 0, midMonth: 0, history: [26, 16, 14, 17, 18, 19], leadTime: 3 },
+            { id: 11, model: '65S', warehouse: 33, ready: 3, defect: 15, floating: 0, midMonth: 0, history: [17, 10, 5, 13, 6, 12], leadTime: 3 },
+            { id: 12, model: '120F', warehouse: 23, ready: 4, defect: 6, floating: 0, midMonth: 0, history: [17, 9, 10, 13, 9, 13], leadTime: 3 },
+            { id: 13, model: '45M', warehouse: 16, ready: 8, defect: 5, floating: 0, midMonth: 0, history: [3, 1, 0, 3, 6, 6], leadTime: 3 },
+            { id: 14, model: 'CABIN', warehouse: 9, ready: 13, defect: 0, floating: 0, midMonth: 0, history: [5, 4, 5, 2, 5, 5], leadTime: 3 },
+            { id: 15, model: '220F', warehouse: 6, ready: 1, defect: 4, floating: 0, midMonth: 0, history: [4, 3, 2, 1, 3, 3], leadTime: 3 },
+            { id: 16, model: '350F', warehouse: 5, ready: 7, defect: 0, floating: 0, midMonth: 0, history: [1, 1, 1, 1, 2, 2], leadTime: 3 },
+            { id: 17, model: '9CN', warehouse: 70, ready: 13, defect: 1, floating: 0, midMonth: 0, history: [3, 0, 13, 13, 5, 29], leadTime: 3 },
+            { id: 18, model: '07S', warehouse: 69, ready: 5, defect: 1, floating: 0, midMonth: 0, history: [26, 19, 25, 32, 15, 16], leadTime: 3 },
+            { id: 19, model: '006C', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 20, model: 'S72C', warehouse: 50, ready: 7, defect: 0, floating: 0, midMonth: 0, history: [3, 4, 10, 2, 4, 9], leadTime: 3 },
+            { id: 21, model: 'S9C', warehouse: 98, ready: 4, defect: 2, floating: 0, midMonth: 0, history: [23, 28, 33, 24, 17, 25], leadTime: 3 },
+            { id: 22, model: 'S9H', warehouse: 0, ready: 4, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 1, 0, 0, 0], leadTime: 3 },
+            { id: 23, model: 'XJ-100', warehouse: 6, ready: 4, defect: 0, floating: 0, midMonth: 0, history: [0, 1, 1, 2, 0, 0], leadTime: 3 },
+            { id: 24, model: 'XJ-1400A', warehouse: 3, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [1, 0, 0, 0, 1, 0], leadTime: 3 },
+            { id: 25, model: 'CABIN-XJ1400A', warehouse: 3, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [1, 0, 0, 0, 1, 0], leadTime: 3 },
+            { id: 26, model: 'XJ-500A', warehouse: 3, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 27, model: 'CABIN-XJ500A', warehouse: 2, ready: 1, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 28, model: 'XJ-150A', warehouse: 2, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 29, model: 'MC13D', warehouse: 26, ready: 10, defect: 0, floating: 0, midMonth: 0, history: [3, 0, 0, 3, 3, 2], leadTime: 3 },
+            { id: 30, model: 'M7A', warehouse: 94, ready: 4, defect: 2, floating: 0, midMonth: 0, history: [19, 11, 1, 16, 14, 24], leadTime: 3 },
+            { id: 31, model: 'K7-B', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 32, model: 'FE-151', warehouse: 33, ready: 6, defect: 2, floating: 0, midMonth: 0, history: [7, 3, 4, 4, 7, 6], leadTime: 3 },
+            { id: 33, model: 'FE-302', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [1, 0, 0, 0, 1, 1], leadTime: 3 },
+            { id: 34, model: 'FE-301', warehouse: 37, ready: 5, defect: 2, floating: 0, midMonth: 0, history: [21, 14, 23, 27, 11, 19], leadTime: 3 },
+            { id: 35, model: 'FE-401', warehouse: 3, ready: 6, defect: 3, floating: 0, midMonth: 0, history: [4, 6, 10, 6, 3, 7], leadTime: 3 },
+            { id: 36, model: 'FE-801', warehouse: 9, ready: 1, defect: 2, floating: 0, midMonth: 0, history: [1, 0, 0, 0, 0, 1], leadTime: 3 },
+            { id: 37, model: 'Prosoda', warehouse: 5, ready: 3, defect: 5, floating: 0, midMonth: 0, history: [15, 20, 14, 21, 18, 13], leadTime: 1.5 },
+            { id: 38, model: 'XJ-700', warehouse: 6, ready: 2, defect: 1, floating: 0, midMonth: 0, history: [1, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 39, model: 'CABIN-XJ700', warehouse: 9, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [1, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 40, model: 'XJ-1121 (ตู้แช่ฝากระจก)', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 41, model: 'XJ-1221 (ตู้แช่ฝาสแตนเลส)', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 42, model: 'U5', warehouse: 9, ready: 7, defect: 4, floating: 0, midMonth: 0, history: [18, 14, 11, 17, 8, 21], leadTime: 1.5 },
+            { id: 43, model: 'RO-A4', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 1], leadTime: 1.5 },
+            { id: 44, model: 'P3B', warehouse: 16, ready: 7, defect: 0, floating: 0, midMonth: 0, history: [18, 19, 7, 13, 14, 14], leadTime: 1.5 },
+            { id: 45, model: 'PROSODA-MAX', warehouse: 19, ready: 5, defect: 3, floating: 0, midMonth: 0, history: [11, 5, 14, 12, 9, 13], leadTime: 1.5 },
+            { id: 46, model: 'RO-G600', warehouse: 40, ready: 4, defect: 8, floating: 0, midMonth: 0, history: [26, 16, 18, 23, 21, 19], leadTime: 3 },
+            { id: 47, model: 'Bleander', warehouse: 15, ready: 3, defect: 1, floating: 0, midMonth: 0, history: [18, 14, 1, 6, 4, 10], leadTime: 1.5 },
+            { id: 48, model: 'Blender-2A', warehouse: 42, ready: 5, defect: 0, floating: 0, midMonth: 0, history: [2, 8, 10, 0, 2, 4], leadTime: 1.5 },
+            { id: 49, model: 'Blender-2B', warehouse: 0, ready: 1, defect: 0, floating: 0, midMonth: 0, history: [3, 4, 2, 14, 2, 1], leadTime: 1.5 },
+            { id: 50, model: 'SA53', warehouse: 0, ready: 1, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 2], leadTime: 3 },
+            { id: 51, model: 'SA56', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 52, model: 'T100', warehouse: 16, ready: 3, defect: 0, floating: 0, midMonth: 0, history: [1, 0, 0, 0, 0, 1], leadTime: 3 },
+            { id: 53, model: 'M97A', warehouse: 0, ready: 1, defect: 0, floating: 0, midMonth: 0, history: [2, 0, 0, 0, 1, 0], leadTime: 3 },
+            { id: 54, model: 'M6A', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 1, 1, 1, 0], leadTime: 3 },
+            { id: 55, model: 'HZBY-12', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 1, 0], leadTime: 3 },
+            { id: 56, model: 'HZB15YLR (BLACK)', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 57, model: 'PROSODA-MAX (V.Mix)', warehouse: 46, ready: 3, defect: 0, floating: 0, midMonth: 0, history: [6, 1, 0, 0, 0, 0], leadTime: 3 },
+            { id: 58, model: 'PROSODA (V.Mix)', warehouse: 0, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [8, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 59, model: 'EM860', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 60, model: 'EM830', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 61, model: 'เครื่อง TEMP ผงกาแฟ', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 62, model: 'FE351', warehouse: 0, ready: 5, defect: 0, floating: 0, midMonth: 0, history: [3, 2, 0, 0, 0, 0], leadTime: 3 },
+            { id: 63, model: 'FE451', warehouse: 9, ready: 1, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 64, model: 'HXR-18', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 65, model: 'HBQL-T30', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
+            { id: 66, model: 'NEW-Blender 8001', warehouse: 1, ready: 0, defect: 0, floating: 0, midMonth: 0, history: [0, 0, 0, 0, 0, 0], leadTime: 3 },
         ];
 
-        // --- Main App Component ---
         const App = () => {
             const [searchTerm, setSearchTerm] = useState('');
             const [lowStockOnly, setLowStockOnly] = useState(false);
             const [threshold, setThreshold] = useState(40);
-            const [sortDirection, setSortDirection] = useState(null); // null, 'asc', 'desc'
+            const [sortDirection, setSortDirection] = useState(null);
             const [sortBy, setSortBy] = useState('total');
+            const [usageView, setUsageView] = useState('total'); // 'total', 'average', 'monthly'
 
-            // --- Helper: Color Code Logic (Updated based on image thresholds) ---
-            const getColorCode = (value) => {
-                if (!isFinite(value)) return 'bg-slate-100 text-slate-400';
-                
-                // ต่ำกว่า 0.75 = สีแดง (ต้องสั่งเพิ่ม)
-                if (value < 0.75) return 'bg-red-500 text-white';
-                
-                // 0.75 ถึง 1.24 = สีเหลือง (เฝ้าระวัง)
-                if (value < 1.25) return 'bg-yellow-400 text-black';
-                
-                // 1.25 ขึ้นไป = สีเขียว (ปกติ)
-                return 'bg-green-500 text-white';
+            // Helper: Style for Color Codes (Modern Badge Style)
+            const getColorCodeStyle = (value) => {
+                if (!isFinite(value)) return 'bg-slate-100 text-slate-500 border-slate-200';
+                if (value < 0.75) return 'bg-red-50 text-red-700 border-red-200 ring-1 ring-red-600/20'; // สั่งเพิ่ม
+                if (value < 1.25) return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-600/20'; // เฝ้าระวัง
+                return 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-600/20'; // ปกติ
             };
 
             // Sort Handler
@@ -185,27 +170,17 @@
             const processedData = useMemo(() => {
                 let data = INITIAL_DATA.map(item => {
                     const total = item.warehouse + item.ready + item.defect + item.floating;
-                    const avgMonthly = item.usage6m / 6;
+                    const usage6m = item.history.reduce((sum, val) => sum + val, 0);
+                    const avgMonthly = usage6m / 6;
                     
-                    // Calculation Normal: Aging = Total / Average
                     const aging = avgMonthly > 0 ? total / avgMonthly : Infinity;
                     const code = item.leadTime > 0 ? aging / item.leadTime : 0;
 
-                    // Calculation +50%: 
                     const avgMonthly50 = avgMonthly * 1.5;
                     const aging50 = avgMonthly50 > 0 ? total / avgMonthly50 : Infinity;
                     const code50 = item.leadTime > 0 ? aging50 / item.leadTime : 0;
 
-                    return {
-                        ...item,
-                        total,
-                        avgMonthly,
-                        aging,
-                        code,
-                        avgMonthly50,
-                        aging50,
-                        code50
-                    };
+                    return { ...item, total, usage6m, avgMonthly, aging, code, avgMonthly50, aging50, code50 };
                 }).filter(item => {
                     const matchesSearch = item.model.toLowerCase().includes(searchTerm.toLowerCase());
                     const matchesLowStock = lowStockOnly ? item.total < threshold : true;
@@ -214,15 +189,10 @@
 
                 if (sortDirection) {
                     data.sort((a, b) => {
-                        let valA = a[sortBy];
-                        let valB = b[sortBy];
-                        
-                        // Handle infinite values in sorting
+                        let valA = a[sortBy]; let valB = b[sortBy];
                         if (!isFinite(valA)) valA = -1; 
                         if (!isFinite(valB)) valB = -1;
-
-                        if (sortDirection === 'asc') return valA - valB;
-                        return valB - valA;
+                        return sortDirection === 'asc' ? valA - valB : valB - valA;
                     });
                 }
                 return data;
@@ -231,213 +201,307 @@
             // Stats
             const stats = useMemo(() => {
                 const totalItems = processedData.length;
-                const lowStockCount = processedData.filter(item => item.total < threshold).length;
-                return { totalItems, lowStockCount };
+                const lowStockCount = processedData.filter(item => item.total > 0 && item.total < threshold).length;
+                const outOfStockCount = processedData.filter(item => item.total === 0).length;
+                return { totalItems, lowStockCount, outOfStockCount };
             }, [processedData, threshold]);
 
             return (
-                <div className="min-h-screen bg-slate-50 font-sans text-slate-800 p-4 pb-20">
-                    
-                    {/* Header */}
-                    <header className="max-w-[98%] mx-auto mb-6">
-                        <div className="bg-gradient-to-r from-blue-900 to-slate-800 text-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="p-4 md:p-6 lg:p-8 min-h-screen">
+                    <div className="max-w-[1400px] mx-auto space-y-6">
+                        
+                        {/* --- HEADER --- */}
+                        <header className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                             <div>
-                                <h1 className="text-2xl font-bold flex items-center gap-2">
-                                    <Package className="w-8 h-8 text-blue-300" />
-                                    ระบบจัดการสต็อกสินค้า (Stock Management)
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold tracking-wide mb-3">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                                    Live Update
+                                </div>
+                                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3 font-eng">
+                                    <Package className="w-8 h-8 text-indigo-600" />
+                                    รายงานสรุปสต็อกสินค้า
                                 </h1>
-                                <p className="text-blue-200 text-sm mt-1 opacity-80">ข้อมูล ณ วันที่ 1/4/2026</p>
+                                <p className="text-slate-500 mt-2 flex items-center gap-2 text-sm">
+                                    ข้อมูลอัปเดตล่าสุด: <strong className="text-slate-700">3 เมษายน 2026</strong>
+                                </p>
                             </div>
-                            
-                            <div className="flex gap-4">
-                                <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg text-center min-w-[100px]">
-                                    <div className="text-2xl font-bold font-eng">{stats.totalItems}</div>
-                                    <div className="text-xs text-blue-200">รายการที่แสดง</div>
-                                </div>
-                                <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 p-3 rounded-lg text-center min-w-[100px]">
-                                    <div className="text-2xl font-bold text-red-300 font-eng">{stats.lowStockCount}</div>
-                                    <div className="text-xs text-red-200">สินค้าใกล้หมด</div>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
 
-                    {/* Controls */}
-                    <div className="max-w-[98%] mx-auto mb-6 space-y-4">
-                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center">
-                            <div className="relative w-full md:w-96">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                            {/* Stats Widgets */}
+                            <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full md:w-auto">
+                                <div className="flex-1 sm:flex-none bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-col justify-center min-w-[120px]">
+                                    <div className="flex items-center gap-2 text-slate-500 mb-1">
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        <span className="text-xs font-medium">รายการที่แสดง</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-slate-800 tabular-nums font-eng">{stats.totalItems}</span>
+                                </div>
+                                <div className="flex-1 sm:flex-none bg-amber-50 border border-amber-100 rounded-xl p-4 flex flex-col justify-center min-w-[120px]">
+                                    <div className="flex items-center gap-2 text-amber-700 mb-1">
+                                        <AlertTriangle className="w-4 h-4" />
+                                        <span className="text-xs font-medium">ใกล้หมด (&lt;{threshold})</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-amber-800 tabular-nums font-eng">{stats.lowStockCount}</span>
+                                </div>
+                                <div className="flex-1 sm:flex-none bg-red-50 border border-red-100 rounded-xl p-4 flex flex-col justify-center min-w-[120px]">
+                                    <div className="flex items-center gap-2 text-red-700 mb-1">
+                                        <AlertOctagon className="w-4 h-4" />
+                                        <span className="text-xs font-medium">สินค้าหมด (0)</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-red-800 tabular-nums font-eng">{stats.outOfStockCount}</span>
+                                </div>
+                            </div>
+                        </header>
+
+                        {/* --- CONTROLS --- */}
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200/60 flex flex-col xl:flex-row gap-4 justify-between items-center z-10 relative">
+                            
+                            {/* Left: Search */}
+                            <div className="relative w-full xl:w-96 group">
+                                <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-indigo-500 transition-colors" />
                                 <input 
                                     type="text" 
                                     placeholder="ค้นหารุ่นสินค้า..." 
-                                    className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all font-sans"
+                                    className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400 font-medium text-slate-700 font-eng"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                                <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg">
-                                    <span className="text-sm text-slate-500">แจ้งเตือนต่ำกว่า:</span>
+                            {/* Right: Filters & Toggles */}
+                            <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 w-full xl:w-auto">
+                                
+                                {/* Threshold Input */}
+                                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden h-11">
+                                    <span className="px-3 text-sm font-medium text-slate-500 bg-slate-100 border-r border-slate-200 flex h-full items-center whitespace-nowrap">
+                                        แจ้งเตือน &lt;
+                                    </span>
                                     <input 
                                         type="number" 
                                         value={threshold}
                                         onChange={(e) => setThreshold(Number(e.target.value))}
-                                        className="w-16 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-blue-700 focus:outline-none focus:border-blue-500 font-eng tabular-nums"
+                                        className="w-16 bg-transparent px-3 py-2 text-center font-bold text-indigo-700 outline-none tabular-nums font-eng"
                                     />
                                 </div>
 
+                                {/* Low Stock Toggle */}
                                 <button 
                                     onClick={() => setLowStockOnly(!lowStockOnly)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                                    className={`h-11 flex items-center justify-center gap-2 px-4 rounded-lg font-medium transition-all text-sm border focus:ring-4 whitespace-nowrap ${
                                         lowStockOnly 
-                                        ? 'bg-red-100 text-red-700 border border-red-200 shadow-sm' 
-                                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 focus:ring-amber-500/20' 
+                                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900 focus:ring-slate-500/10'
                                     }`}
                                 >
-                                    <AlertTriangle classNamePath={lowStockOnly ? 'fill-current' : ''} className="w-4 h-4" />
-                                    {lowStockOnly ? 'แสดงสินค้าทั้งหมด' : 'แสดงเฉพาะสินค้าใกล้หมด'}
+                                    <AlertTriangle className={`w-4 h-4 ${lowStockOnly ? 'fill-current' : ''}`} />
+                                    {lowStockOnly ? 'แสดงสินค้าทั้งหมด' : 'แสดงเฉพาะใกล้หมด'}
                                 </button>
+
+                                <div className="w-px h-8 bg-slate-200 hidden lg:block mx-1"></div>
+
+                                {/* View Mode Toggle */}
+                                <div className="flex items-center bg-slate-100/80 p-1 rounded-lg border border-slate-200 w-full lg:w-auto h-11">
+                                    <button 
+                                        onClick={() => setUsageView('total')} 
+                                        className={`flex-1 lg:flex-none px-4 py-1.5 rounded-md text-sm font-semibold transition-all whitespace-nowrap ${usageView === 'total' ? 'bg-white shadow-sm text-indigo-700 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        รวม 6M
+                                    </button>
+                                    <button 
+                                        onClick={() => setUsageView('average')} 
+                                        className={`flex-1 lg:flex-none px-4 py-1.5 rounded-md text-sm font-semibold transition-all whitespace-nowrap ${usageView === 'average' ? 'bg-white shadow-sm text-indigo-700 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        เฉลี่ย/เดือน
+                                    </button>
+                                    <button 
+                                        onClick={() => setUsageView('monthly')} 
+                                        className={`flex-1 lg:flex-none px-4 py-1.5 rounded-md text-sm font-semibold transition-all whitespace-nowrap ${usageView === 'monthly' ? 'bg-white shadow-sm text-indigo-700 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        รายเดือน
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Table */}
-                    <div className="max-w-[98%] mx-auto">
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="overflow-x-auto custom-scrollbar">
-                                <table className="w-full text-[13px] text-left min-w-[1200px] whitespace-nowrap">
-                                    <thead className="text-white uppercase tracking-wider">
-                                        <tr className="bg-slate-800 border-b border-slate-700">
-                                            <th className="p-3 text-center bg-slate-900 w-12 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">No.</th>
-                                            <th className="p-3 font-semibold text-white min-w-[180px] sticky left-12 z-20 bg-slate-900 border-r border-slate-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">Monitor Goods</th>
-                                            <th className="p-3 text-center bg-blue-900/80 w-16">โกดัง</th>
-                                            <th className="p-3 text-center bg-blue-800/80 w-16">พร้อม</th>
-                                            <th className="p-3 text-center bg-orange-700/80 w-16">ตำหนิ</th>
-                                            <th className="p-3 text-center bg-indigo-900/80 w-16">โมลลอย</th>
+                        {/* --- DATA TABLE --- */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden relative z-0">
+                            <div className="overflow-x-auto custom-scrollbar pb-2">
+                                <table className="w-full text-left border-collapse min-w-[1200px]">
+                                    <thead>
+                                        <tr className="bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-semibold">
+                                            {/* Sticky Columns */}
+                                            <th className="py-4 px-3 text-center sticky left-0 z-20 bg-slate-50/95 backdrop-blur-sm w-12">No.</th>
+                                            <th className="py-4 px-4 sticky left-12 z-20 bg-slate-50/95 backdrop-blur-sm min-w-[180px] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] border-r border-slate-200">
+                                                Monitor Goods
+                                            </th>
+                                            
+                                            {/* Stock Breakdown */}
+                                            <th className="py-4 px-3 text-center text-slate-600">โกดัง</th>
+                                            <th className="py-4 px-3 text-center text-slate-600">พร้อมขาย</th>
+                                            <th className="py-4 px-3 text-center text-orange-600">ตำหนิ</th>
+                                            <th className="py-4 px-3 text-center text-indigo-600 border-r border-slate-200">โมลลอย</th>
+                                            
+                                            {/* Total Stock */}
                                             <th 
-                                                className="p-3 text-center font-bold bg-slate-900 cursor-pointer hover:bg-slate-700 border-l border-slate-700 w-20"
+                                                className="py-4 px-4 text-center text-slate-800 bg-slate-100/50 cursor-pointer hover:bg-slate-200/50 transition-colors w-24 group border-r border-slate-200"
                                                 onClick={() => handleSort('total')}
                                             >
-                                                <div className="flex items-center justify-center gap-1">
-                                                    รวม
-                                                    {sortBy === 'total' && sortDirection === 'asc' && <ArrowUp className="w-3 h-3 text-green-400" />}
-                                                    {sortBy === 'total' && sortDirection === 'desc' && <ArrowDown className="w-3 h-3 text-red-400" />}
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    รวมทั้งหมด
+                                                    <span className="text-slate-400 group-hover:text-slate-600">
+                                                        {sortBy === 'total' ? (sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-indigo-600" /> : <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />) : <ArrowUpDown className="w-3.5 h-3.5 opacity-50" />}
+                                                    </span>
                                                 </div>
                                             </th>
                                             
-                                            {/* New Mid-Month Column */}
-                                            <th 
-                                                className="p-3 text-center font-bold bg-indigo-700 text-white w-24 border-r border-slate-700 cursor-pointer hover:bg-indigo-600"
-                                                onClick={() => handleSort('midMonth')}
-                                                title="ยอดขายกลางเดือน (16/4/2026)"
-                                            >
-                                                <div className="flex items-center justify-center gap-1">
-                                                    ยอดกลางเดือน
-                                                    {sortBy === 'midMonth' && <ArrowDown className="w-3 h-3 text-white" />}
-                                                </div>
-                                            </th>
+                                            {/* Dynamic Usage View */}
+                                            {usageView === 'monthly' ? (
+                                                MONTH_LABELS.map((label, idx) => (
+                                                    <th key={idx} className={`py-4 px-2 text-center text-teal-700 bg-teal-50/30 ${idx === 5 ? 'border-r border-slate-200' : ''}`}>
+                                                        <div className="flex flex-col items-center leading-tight">
+                                                            <span>{label.split(' ')[0]}</span>
+                                                            <span className="text-[9px] font-normal opacity-70">{label.split(' ')[1]}</span>
+                                                        </div>
+                                                    </th>
+                                                ))
+                                            ) : (
+                                                <th 
+                                                    className="py-4 px-4 text-center text-teal-700 bg-teal-50/50 cursor-pointer hover:bg-teal-100/50 transition-colors border-r border-slate-200 group"
+                                                    onClick={() => handleSort(usageView === 'average' ? 'avgMonthly' : 'usage6m')}
+                                                >
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <BarChart3 className="w-3.5 h-3.5 opacity-70" />
+                                                        {usageView === 'average' ? 'ยอดเฉลี่ย/เดือน' : 'ยอดรวม 6 เดือน'}
+                                                        <span className="text-teal-400 group-hover:text-teal-600">
+                                                            {(sortBy === 'usage6m' || sortBy === 'avgMonthly') ? (sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />) : <ArrowUpDown className="w-3.5 h-3.5 opacity-50" />}
+                                                        </span>
+                                                    </div>
+                                                </th>
+                                            )}
 
-                                            <th 
-                                                className="p-3 text-center font-bold bg-teal-800 cursor-pointer hover:bg-teal-700 w-24 border-r border-slate-700"
-                                                onClick={() => handleSort('usage6m')}
-                                            >
-                                                <div className="flex items-center justify-center gap-1">
-                                                    ยอดออก 6M
-                                                    {sortBy === 'usage6m' && <ArrowDown className="w-3 h-3 text-white" />}
-                                                </div>
-                                            </th>
-                                            <th className="p-3 text-center font-bold bg-yellow-700 text-white w-20 border-r border-slate-600" title="ระยะเวลาซื้อ (เดือน)">Lead Time</th>
+                                            {/* Lead Time */}
+                                            <th className="py-4 px-3 text-center text-slate-600 border-r border-slate-200">Lead Time<br/><span className="text-[9px] font-normal opacity-70">(เดือน)</span></th>
                                             
-                                            {/* Normal Scenario Headers */}
-                                            <th className="p-3 text-center font-bold bg-teal-700 w-24 border-r border-teal-600">เฉลี่ย/ด</th>
-                                            <th className="p-3 text-center font-bold bg-amber-700 text-white w-24 border-r border-amber-600" title="สต็อกจะอยู่ได้ (เดือน)">สต็อก(ด.)</th>
+                                            {/* Aging & Color Codes */}
+                                            <th className="py-4 px-3 text-center text-slate-600 bg-slate-50/50">เฉลี่ย/ด<br/><span className="text-[9px] font-normal opacity-70">(ปกติ)</span></th>
+                                            <th className="py-4 px-3 text-center text-slate-600 bg-slate-50/50">สต็อก(ด.)</th>
                                             <th 
-                                                className="p-3 text-center font-bold bg-emerald-700 text-white w-24 cursor-pointer hover:bg-emerald-600 border-r border-slate-600" 
-                                                title="รหัส (Code)"
+                                                className="py-4 px-3 text-center text-slate-900 bg-slate-100/50 cursor-pointer hover:bg-slate-200/50 border-r border-slate-200 group"
                                                 onClick={() => handleSort('code')}
                                             >
-                                                <div className="flex items-center justify-center gap-1">
-                                                    รหัส
-                                                    {sortBy === 'code' && <ArrowDown className="w-3 h-3 text-white" />}
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    รหัสสี
+                                                    <span className="text-slate-400 group-hover:text-slate-600">
+                                                        {sortBy === 'code' ? (sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-indigo-600" /> : <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />) : <ArrowUpDown className="w-3.5 h-3.5 opacity-50" />}
+                                                    </span>
                                                 </div>
                                             </th>
 
-                                            {/* +50% Scenario Headers */}
-                                            <th className="p-3 text-center font-bold bg-purple-800 w-24 border-r border-purple-700">เฉลี่ย(+50%)</th>
-                                            <th className="p-3 text-center font-bold bg-fuchsia-800 text-white w-24 border-r border-fuchsia-700" title="สต็อกจะอยู่ได้ถ้าใช้เพิ่ม 50%">สต็อก(+50%)</th>
+                                            {/* Aging & Color Codes (+50%) */}
+                                            <th className="py-4 px-3 text-center text-fuchsia-700 bg-fuchsia-50/30">เฉลี่ย(+50%)</th>
+                                            <th className="py-4 px-3 text-center text-fuchsia-700 bg-fuchsia-50/30">สต็อก(+50%)</th>
                                             <th 
-                                                className="p-3 text-center font-bold bg-pink-700 text-white w-24 cursor-pointer hover:bg-pink-600" 
-                                                title="รหัสเมื่อยอดใช้เพิ่ม 50%"
+                                                className="py-4 px-3 text-center text-fuchsia-900 bg-fuchsia-100/40 cursor-pointer hover:bg-fuchsia-200/40 group"
                                                 onClick={() => handleSort('code50')}
                                             >
-                                                <div className="flex items-center justify-center gap-1">
+                                                <div className="flex items-center justify-center gap-1.5">
                                                     รหัส(+50%)
-                                                    {sortBy === 'code50' && <ArrowDown className="w-3 h-3 text-white" />}
+                                                    <span className="text-fuchsia-400 group-hover:text-fuchsia-600">
+                                                        {sortBy === 'code50' ? (sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-fuchsia-600" /> : <ArrowDown className="w-3.5 h-3.5 text-fuchsia-600" />) : <ArrowUpDown className="w-3.5 h-3.5 opacity-50" />}
+                                                    </span>
                                                 </div>
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-200 bg-white">
+                                    <tbody className="divide-y divide-slate-100">
                                         {processedData.length > 0 ? (
-                                            processedData.map((item, index) => {
-                                                const isLowStock = item.total < threshold;
+                                            processedData.map((item) => {
+                                                const isLowStock = item.total > 0 && item.total < threshold;
                                                 const isOutOfStock = item.total === 0;
 
                                                 return (
                                                     <tr 
                                                         key={item.id} 
-                                                        className={`hover:bg-blue-50 transition-colors ${
-                                                            isOutOfStock ? 'bg-red-50' : isLowStock ? 'bg-orange-50' : ''
+                                                        className={`group transition-colors duration-150 ${
+                                                            isOutOfStock ? 'bg-red-50/30 hover:bg-red-50/70' : 
+                                                            isLowStock ? 'bg-amber-50/30 hover:bg-amber-50/70' : 
+                                                            'hover:bg-slate-50/80'
                                                         }`}
                                                     >
-                                                        <td className="p-3 text-center text-slate-500 font-eng sticky left-0 bg-white z-10 border-r border-slate-100">{item.id}</td>
-                                                        <td className="p-3 font-medium text-slate-800 sticky left-12 bg-white z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                                            <div className="flex items-center gap-2">
+                                                        {/* Sticky No. */}
+                                                        <td className={`py-3 px-3 text-center text-slate-400 font-eng text-xs sticky left-0 z-10 border-r border-slate-100/50 ${
+                                                            isOutOfStock ? 'bg-red-50/80 group-hover:bg-red-50' : 
+                                                            isLowStock ? 'bg-amber-50/80 group-hover:bg-amber-50' : 
+                                                            'bg-white group-hover:bg-slate-50'
+                                                        }`}>{item.id}</td>
+                                                        
+                                                        {/* Sticky Name */}
+                                                        <td className={`py-3 px-4 font-semibold text-slate-700 sticky left-12 z-10 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.02)] border-r border-slate-200/60 font-eng ${
+                                                            isOutOfStock ? 'bg-red-50/80 group-hover:bg-red-50' : 
+                                                            isLowStock ? 'bg-amber-50/80 group-hover:bg-amber-50' : 
+                                                            'bg-white group-hover:bg-slate-50'
+                                                        }`}>
+                                                            <div className="flex items-center gap-2.5">
                                                                 {item.model}
-                                                                {isOutOfStock && <span className="text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded shadow-sm">หมด</span>}
+                                                                {isOutOfStock && <span className="text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded shadow-sm">หมด</span>}
+                                                                {isLowStock && <span className="text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded shadow-sm">ใกล้หมด</span>}
                                                             </div>
                                                         </td>
-                                                        <td className="p-3 text-center text-slate-600 font-eng tabular-nums border-r border-slate-100">{item.warehouse}</td>
-                                                        <td className="p-3 text-center text-slate-600 font-eng tabular-nums border-r border-slate-100">{item.ready}</td>
-                                                        <td className="p-3 text-center text-slate-600 font-eng tabular-nums border-r border-slate-100">{item.defect}</td>
-                                                        <td className="p-3 text-center text-slate-600 font-eng tabular-nums border-r border-slate-100">{item.floating}</td>
-                                                        <td className="p-3 text-center font-bold text-base border-r border-slate-200 font-eng tabular-nums bg-slate-50">
-                                                             <span className={isLowStock ? 'text-red-600' : 'text-slate-800'}>{item.total}</span>
+                                                        
+                                                        {/* Breakdown */}
+                                                        <td className="py-3 px-3 text-center text-slate-500 font-eng tabular-nums">{item.warehouse}</td>
+                                                        <td className="py-3 px-3 text-center text-slate-500 font-eng tabular-nums">{item.ready}</td>
+                                                        <td className="py-3 px-3 text-center text-slate-400 font-eng tabular-nums">{item.defect > 0 ? <span className="text-orange-500 font-medium">{item.defect}</span> : 0}</td>
+                                                        <td className="py-3 px-3 text-center text-slate-400 font-eng tabular-nums border-r border-slate-200/60">{item.floating > 0 ? <span className="text-indigo-500 font-medium">{item.floating}</span> : 0}</td>
+                                                        
+                                                        {/* Total */}
+                                                        <td className="py-3 px-4 text-center border-r border-slate-200/60">
+                                                            <span className={`inline-flex items-center justify-center min-w-[2.5rem] py-1 px-2.5 rounded-md font-bold font-eng tabular-nums shadow-sm ${
+                                                                isOutOfStock ? 'bg-red-500 text-white' :
+                                                                isLowStock ? 'bg-amber-500 text-white' :
+                                                                'bg-slate-800 text-white'
+                                                            }`}>
+                                                                {item.total}
+                                                            </span>
                                                         </td>
                                                         
-                                                        {/* New Mid-Month Column */}
-                                                        <td className="p-3 text-center font-semibold text-indigo-700 font-eng tabular-nums border-r border-slate-200 bg-indigo-50/30">
-                                                            {item.midMonth}
-                                                        </td>
+                                                        {/* Dynamic Usage */}
+                                                        {usageView === 'monthly' ? (
+                                                            item.history.map((val, idx) => (
+                                                                <td key={idx} className={`py-3 px-2 text-center font-eng tabular-nums text-slate-600 bg-teal-50/10 ${idx === 5 ? 'border-r border-slate-200/60' : ''}`}>
+                                                                    {val > 0 ? val : <span className="text-slate-300">-</span>}
+                                                                </td>
+                                                            ))
+                                                        ) : (
+                                                            <td className="py-3 px-4 text-center text-teal-700 font-bold font-eng tabular-nums bg-teal-50/30 border-r border-slate-200/60">
+                                                                {usageView === 'average' ? item.avgMonthly.toFixed(1) : item.usage6m}
+                                                            </td>
+                                                        )}
 
-                                                        <td className="p-3 text-center text-teal-700 bg-teal-50/30 font-medium font-eng tabular-nums border-r border-slate-100">{item.usage6m}</td>
-                                                        <td className="p-3 text-center bg-yellow-50/30 font-bold text-slate-700 border-r border-slate-200 font-eng tabular-nums">
-                                                            {item.leadTime}
-                                                        </td>
+                                                        {/* Lead Time */}
+                                                        <td className="py-3 px-3 text-center text-slate-600 font-eng border-r border-slate-200/60 tabular-nums">{item.leadTime}</td>
                                                         
                                                         {/* Normal Scenario Data */}
-                                                        <td className="p-3 text-center text-teal-800 bg-teal-100/20 font-medium font-eng tabular-nums border-r border-slate-100">
+                                                        <td className="py-3 px-3 text-center text-slate-500 font-eng tabular-nums bg-slate-50/30">
                                                             {item.avgMonthly > 0 ? item.avgMonthly.toFixed(1) : '-'}
                                                         </td>
-                                                        <td className="p-3 text-center bg-amber-50/20 font-eng tabular-nums text-slate-700 border-r border-slate-100">
+                                                        <td className="py-3 px-3 text-center text-slate-500 font-eng tabular-nums bg-slate-50/30">
                                                             {isFinite(item.aging) ? item.aging.toFixed(1) : '-'}
                                                         </td>
-                                                        <td className="p-1 text-center align-middle border-r border-slate-200">
-                                                            <div className={`mx-auto py-1 px-2 rounded font-bold text-xs w-16 font-eng shadow-sm ${getColorCode(item.code)}`}>
+                                                        <td className="py-3 px-3 text-center border-r border-slate-200/60 bg-slate-50/30">
+                                                            <div className={`mx-auto inline-flex items-center justify-center min-w-[3.5rem] py-1 px-2 rounded font-bold text-xs font-eng border ${getColorCodeStyle(item.code)}`}>
                                                                 {isFinite(item.code) ? item.code.toFixed(2) : '-'}
                                                             </div>
                                                         </td>
 
                                                         {/* +50% Scenario Data */}
-                                                        <td className="p-3 text-center text-purple-800 bg-purple-100/20 font-medium font-eng tabular-nums border-r border-slate-100">
+                                                        <td className="py-3 px-3 text-center text-fuchsia-700/70 font-eng tabular-nums bg-fuchsia-50/20">
                                                             {item.avgMonthly50 > 0 ? item.avgMonthly50.toFixed(1) : '-'}
                                                         </td>
-                                                        <td className="p-3 text-center bg-fuchsia-50/20 font-eng tabular-nums text-slate-700 border-r border-slate-100">
+                                                        <td className="py-3 px-3 text-center text-fuchsia-700/70 font-eng tabular-nums bg-fuchsia-50/20">
                                                             {isFinite(item.aging50) ? item.aging50.toFixed(1) : '-'}
                                                         </td>
-                                                        <td className="p-1 text-center align-middle">
-                                                            <div className={`mx-auto py-1 px-2 rounded font-bold text-xs w-16 font-eng shadow-sm ${getColorCode(item.code50)}`}>
+                                                        <td className="py-3 px-3 text-center bg-fuchsia-50/20">
+                                                            <div className={`mx-auto inline-flex items-center justify-center min-w-[3.5rem] py-1 px-2 rounded font-bold text-xs font-eng border ${getColorCodeStyle(item.code50)}`}>
                                                                 {isFinite(item.code50) ? item.code50.toFixed(2) : '-'}
                                                             </div>
                                                         </td>
@@ -446,16 +510,31 @@
                                             })
                                         ) : (
                                             <tr>
-                                                <td colSpan="16" className="p-12 text-center text-slate-400">
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <Filter className="w-8 h-8 opacity-50" />
-                                                        <p>ไม่พบข้อมูลที่ตรงกับเงื่อนไข</p>
+                                                <td colSpan="20" className="p-16 text-center">
+                                                    <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
+                                                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-2">
+                                                            <Search className="w-8 h-8 opacity-40" />
+                                                        </div>
+                                                        <p className="text-lg font-medium text-slate-500">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</p>
+                                                        <p className="text-sm">ลองเปลี่ยนคำค้นหา หรือปิดตัวกรองสินค้าใกล้หมด</p>
                                                     </div>
                                                 </td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                            
+                            {/* Table Footer */}
+                            <div className="bg-slate-50/80 border-t border-slate-200/60 p-4 px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500">
+                                <div className="flex items-center gap-4">
+                                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-red-50 border border-red-200"></div> ต้องสั่งเพิ่ม (&lt; 0.75)</span>
+                                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-amber-50 border border-amber-200"></div> เฝ้าระวัง (0.75 - 1.24)</span>
+                                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-emerald-50 border border-emerald-200"></div> ปกติ (≥ 1.25)</span>
+                                </div>
+                                <div>
+                                    แสดงข้อมูลทั้งหมด <strong className="text-slate-700">{processedData.length}</strong> จาก {INITIAL_DATA.length} รายการ
+                                </div>
                             </div>
                         </div>
                     </div>
