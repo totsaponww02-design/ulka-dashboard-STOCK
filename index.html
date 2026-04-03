@@ -15,6 +15,10 @@
     <!-- Babel (for JSX) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- HTML2Canvas & jsPDF for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <!-- Font Noto Sans Thai & Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -65,7 +69,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo } = React;
+        const { useState, useMemo, useRef } = React;
 
         // --- Icons Components ---
         const Search = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>);
@@ -78,6 +82,8 @@
         const BarChart3 = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/></svg>);
         const CheckCircle2 = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>);
         const AlertOctagon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>);
+        const Download = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>);
+        const Loader2 = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`animate-spin ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>);
 
         // --- Data (Verified with 3/4/2026, History = [Mar'69, Feb'69, Jan'69, Dec'68, Nov'68, Oct'68]) ---
         const MONTH_LABELS = ['มี.ค. 69', 'ก.พ. 69', 'ม.ค. 69', 'ธ.ค. 68', 'พ.ย. 68', 'ต.ค. 68'];
@@ -158,6 +164,10 @@
             const [sortDirection, setSortDirection] = useState(null);
             const [sortBy, setSortBy] = useState('total');
             const [usageView, setUsageView] = useState('total'); // 'total', 'average', 'monthly'
+            
+            // Ref for PDF Export
+            const printRef = useRef(null);
+            const [isExporting, setIsExporting] = useState(false);
 
             // Helper: Style for Color Codes
             const getColorCodeStyle = (value) => {
@@ -221,48 +231,143 @@
                 return { totalItems, lowStockCount, outOfStockCount };
             }, [processedData, threshold]);
 
+            // PDF Export Function
+            const handleExportPDF = async () => {
+                if (!printRef.current || isExporting) return;
+                
+                setIsExporting(true);
+                
+                try {
+                    const element = printRef.current;
+                    const tableContainer = element.querySelector('.table-container');
+                    
+                    // 1. Pre-capture setup: Ensure table container doesn't hide overflow
+                    let originalOverflow = '';
+                    if (tableContainer) {
+                        originalOverflow = tableContainer.style.overflowX;
+                        tableContainer.style.overflowX = 'visible';
+                        // Force width to fit content so html2canvas renders the whole table
+                        element.style.width = 'max-content';
+                        element.style.padding = '20px'; // Add some padding for the PDF edges
+                    }
+
+                    // Small delay to allow browser to apply styles before capturing
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    // 2. Capture canvas
+                    const canvas = await html2canvas(element, {
+                        scale: 1.5, // Balance between detail and file size
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#f8fafc' // match bg-slate-50
+                    });
+
+                    // 3. Post-capture cleanup: Restore styles
+                    if (tableContainer) {
+                        tableContainer.style.overflowX = originalOverflow;
+                        element.style.width = '';
+                        element.style.padding = '';
+                    }
+
+                    // 4. Generate PDF
+                    const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                    const { jsPDF } = window.jspdf;
+                    
+                    // Use A4 Landscape
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    // Calculate height to maintain aspect ratio
+                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                    
+                    // Format date for filename
+                    const dateObj = new Date();
+                    const dateStr = `${dateObj.getDate()}-${dateObj.getMonth()+1}-${dateObj.getFullYear()}`;
+                    
+                    pdf.save(`Stock_Report_${dateStr}.pdf`);
+
+                } catch (error) {
+                    console.error("PDF Export failed:", error);
+                    alert("ขออภัย เกิดข้อผิดพลาดในการสร้างไฟล์ PDF");
+                } finally {
+                    setIsExporting(false);
+                }
+            };
+
             return (
                 <div className="p-2 sm:p-4 md:p-6 lg:p-8 min-h-screen">
                     <div className="max-w-[1400px] mx-auto space-y-4 md:space-y-6">
                         
-                        {/* --- HEADER --- */}
+                        {/* --- MAIN HEADER --- */}
                         <header className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
                             <div className="w-full md:w-auto">
-                                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] sm:text-xs font-semibold tracking-wide mb-2 sm:mb-3">
-                                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                                    Live Update
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] sm:text-xs font-semibold tracking-wide mb-2 sm:mb-3">
+                                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                                            Live Update
+                                        </div>
+                                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2 sm:gap-3 font-eng">
+                                            <Package className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
+                                            รายงานสรุปสต็อก
+                                        </h1>
+                                        <p className="text-slate-500 mt-1.5 sm:mt-2 flex items-center gap-2 text-xs sm:text-sm">
+                                            อัปเดตล่าสุด: <strong className="text-slate-700">3 เม.ย. 2026</strong>
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Mobile Export Button (Visible only on small screens) */}
+                                    <button 
+                                        onClick={handleExportPDF}
+                                        disabled={isExporting}
+                                        className="md:hidden flex items-center justify-center gap-2 bg-slate-800 text-white px-3 py-2 rounded-lg font-medium text-xs hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-70"
+                                    >
+                                        {isExporting ? <Loader2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                                        <span className="sr-only">โหลด PDF</span>
+                                    </button>
                                 </div>
-                                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2 sm:gap-3 font-eng">
-                                    <Package className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
-                                    รายงานสรุปสต็อก
-                                </h1>
-                                <p className="text-slate-500 mt-1.5 sm:mt-2 flex items-center gap-2 text-xs sm:text-sm">
-                                    อัปเดตล่าสุด: <strong className="text-slate-700">3 เม.ย. 2026</strong>
-                                </p>
                             </div>
 
-                            {/* Stats Widgets */}
-                            <div className="grid grid-cols-2 md:flex gap-2 sm:gap-3 w-full md:w-auto">
-                                <div className="col-span-2 md:col-span-1 bg-slate-50 border border-slate-100 rounded-xl p-3 sm:p-4 flex flex-col justify-center min-w-[100px] sm:min-w-[120px]">
-                                    <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-                                        <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                        <span className="text-[10px] sm:text-xs font-medium">รายการที่แสดง</span>
+                            <div className="flex flex-col items-end gap-4 w-full md:w-auto">
+                                {/* Desktop Export Button */}
+                                <button 
+                                    onClick={handleExportPDF}
+                                    disabled={isExporting}
+                                    className="hidden md:flex items-center justify-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-xl font-medium text-sm hover:bg-slate-700 hover:shadow-md active:scale-95 transition-all disabled:opacity-70 disabled:hover:scale-100 disabled:hover:shadow-none"
+                                >
+                                    {isExporting ? <Loader2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                                    {isExporting ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF'}
+                                </button>
+
+                                {/* Stats Widgets */}
+                                <div className="grid grid-cols-2 md:flex gap-2 sm:gap-3 w-full md:w-auto">
+                                    <div className="col-span-2 md:col-span-1 bg-slate-50 border border-slate-100 rounded-xl p-3 sm:p-4 flex flex-col justify-center min-w-[100px] sm:min-w-[120px]">
+                                        <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+                                            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                            <span className="text-[10px] sm:text-xs font-medium">รายการที่แสดง</span>
+                                        </div>
+                                        <span className="text-xl sm:text-2xl font-bold text-slate-800 tabular-nums font-eng">{stats.totalItems}</span>
                                     </div>
-                                    <span className="text-xl sm:text-2xl font-bold text-slate-800 tabular-nums font-eng">{stats.totalItems}</span>
-                                </div>
-                                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 sm:p-4 flex flex-col justify-center min-w-[100px] sm:min-w-[120px]">
-                                    <div className="flex items-center gap-1.5 text-amber-700 mb-1">
-                                        <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                        <span className="text-[10px] sm:text-xs font-medium">ใกล้หมด (&lt;{threshold})</span>
+                                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 sm:p-4 flex flex-col justify-center min-w-[100px] sm:min-w-[120px]">
+                                        <div className="flex items-center gap-1.5 text-amber-700 mb-1">
+                                            <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                            <span className="text-[10px] sm:text-xs font-medium">ใกล้หมด (&lt;{threshold})</span>
+                                        </div>
+                                        <span className="text-xl sm:text-2xl font-bold text-amber-800 tabular-nums font-eng">{stats.lowStockCount}</span>
                                     </div>
-                                    <span className="text-xl sm:text-2xl font-bold text-amber-800 tabular-nums font-eng">{stats.lowStockCount}</span>
-                                </div>
-                                <div className="bg-red-50 border border-red-100 rounded-xl p-3 sm:p-4 flex flex-col justify-center min-w-[100px] sm:min-w-[120px]">
-                                    <div className="flex items-center gap-1.5 text-red-700 mb-1">
-                                        <AlertOctagon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                        <span className="text-[10px] sm:text-xs font-medium">สินค้าหมด (0)</span>
+                                    <div className="bg-red-50 border border-red-100 rounded-xl p-3 sm:p-4 flex flex-col justify-center min-w-[100px] sm:min-w-[120px]">
+                                        <div className="flex items-center gap-1.5 text-red-700 mb-1">
+                                            <AlertOctagon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                            <span className="text-[10px] sm:text-xs font-medium">สินค้าหมด (0)</span>
+                                        </div>
+                                        <span className="text-xl sm:text-2xl font-bold text-red-800 tabular-nums font-eng">{stats.outOfStockCount}</span>
                                     </div>
-                                    <span className="text-xl sm:text-2xl font-bold text-red-800 tabular-nums font-eng">{stats.outOfStockCount}</span>
                                 </div>
                             </div>
                         </header>
@@ -338,225 +443,231 @@
                             </div>
                         </div>
 
-                        {/* --- DATA TABLE --- */}
-                        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden relative z-0">
-                            <div className="overflow-x-auto custom-scrollbar pb-1 sm:pb-2 table-container">
-                                <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-[1200px]">
-                                    <thead>
-                                        <tr className="bg-slate-50/90 text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-semibold">
-                                            {/* Sticky Columns */}
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center sticky left-0 z-20 bg-slate-50/95 backdrop-blur-sm w-10 sm:w-12">No.</th>
-                                            <th className="py-3 sm:py-4 px-3 sm:px-4 sticky left-10 sm:left-12 z-20 bg-slate-50/95 backdrop-blur-sm min-w-[140px] sm:min-w-[180px] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] border-r border-slate-200">
-                                                Monitor Goods
-                                            </th>
-                                            
-                                            {/* Stock Breakdown */}
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600">โกดัง</th>
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600">พร้อมขาย</th>
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-orange-600">ตำหนิ</th>
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-indigo-600 border-r border-slate-200">โมลลอย</th>
-                                            
-                                            {/* Total Stock */}
-                                            <th 
-                                                className="py-3 sm:py-4 px-2 sm:px-4 text-center text-slate-800 bg-slate-100/50 cursor-pointer hover:bg-slate-200/50 transition-colors w-20 sm:w-24 group border-r border-slate-200"
-                                                onClick={() => handleSort('total')}
-                                            >
-                                                <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-                                                    รวมทั้งหมด
-                                                    <span className="text-slate-400 group-hover:text-slate-600">
-                                                        {sortBy === 'total' ? (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600" /> : <ArrowDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600" />) : <ArrowUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />}
-                                                    </span>
-                                                </div>
-                                            </th>
-                                            
-                                            {/* Dynamic Usage View */}
-                                            {usageView === 'monthly' ? (
-                                                MONTH_LABELS.map((label, idx) => (
-                                                    <th key={idx} className={`py-3 sm:py-4 px-1.5 sm:px-2 text-center text-teal-700 bg-teal-50/40 ${idx === 5 ? 'border-r border-slate-200' : ''}`}>
-                                                        <div className="flex flex-col items-center leading-tight">
-                                                            <span className="whitespace-nowrap">{label.split(' ')[0]}</span>
-                                                            <span className="text-[8px] sm:text-[9px] font-normal opacity-70">{label.split(' ')[1]}</span>
-                                                        </div>
-                                                    </th>
-                                                ))
-                                            ) : (
+                        {/* --- PRINT CONTAINER --- */}
+                        {/* We attach the ref here so the PDF includes the table and the footer info */}
+                        <div ref={printRef} className="bg-slate-50">
+                            
+                            {/* --- DATA TABLE --- */}
+                            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden relative z-0">
+                                <div className="overflow-x-auto custom-scrollbar pb-1 sm:pb-2 table-container">
+                                    <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-[1200px]">
+                                        <thead>
+                                            <tr className="bg-slate-50/90 text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-semibold">
+                                                {/* Sticky Columns */}
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center sticky left-0 z-20 bg-slate-50/95 backdrop-blur-sm w-10 sm:w-12">No.</th>
+                                                <th className="py-3 sm:py-4 px-3 sm:px-4 sticky left-10 sm:left-12 z-20 bg-slate-50/95 backdrop-blur-sm min-w-[140px] sm:min-w-[180px] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] border-r border-slate-200">
+                                                    Monitor Goods
+                                                </th>
+                                                
+                                                {/* Stock Breakdown */}
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600">โกดัง</th>
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600">พร้อมขาย</th>
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-orange-600">ตำหนิ</th>
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-indigo-600 border-r border-slate-200">โมลลอย</th>
+                                                
+                                                {/* Total Stock */}
                                                 <th 
-                                                    className="py-3 sm:py-4 px-2 sm:px-4 text-center text-teal-700 bg-teal-50/60 cursor-pointer hover:bg-teal-100/60 transition-colors border-r border-slate-200 group"
-                                                    onClick={() => handleSort(usageView === 'average' ? 'avgMonthly' : 'usage6m')}
+                                                    className="py-3 sm:py-4 px-2 sm:px-4 text-center text-slate-800 bg-slate-100/50 cursor-pointer hover:bg-slate-200/50 transition-colors w-20 sm:w-24 group border-r border-slate-200"
+                                                    onClick={() => handleSort('total')}
                                                 >
                                                     <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-                                                        <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-70 hidden sm:block" />
-                                                        {usageView === 'average' ? 'ยอดเฉลี่ย/ด.' : 'ยอดรวม 6M'}
-                                                        <span className="text-teal-400 group-hover:text-teal-600">
-                                                            {(sortBy === 'usage6m' || sortBy === 'avgMonthly') ? (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <ArrowDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />) : <ArrowUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />}
+                                                        รวมทั้งหมด
+                                                        <span className="text-slate-400 group-hover:text-slate-600">
+                                                            {sortBy === 'total' ? (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600" /> : <ArrowDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600" />) : <ArrowUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />}
                                                         </span>
                                                     </div>
                                                 </th>
-                                            )}
-
-                                            {/* Lead Time */}
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600 border-r border-slate-200">Lead Time<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(เดือน)</span></th>
-                                            
-                                            {/* Aging & Color Codes */}
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600 bg-slate-50/50 leading-tight">เฉลี่ย/เดือน<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(ปกติ)</span></th>
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600 bg-slate-50/50 leading-tight" title="คาดการณ์ระยะเวลาที่สต็อกจะอยู่ได้ (เดือน)">คาดการณ์คงเหลือ<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(เดือน)</span></th>
-                                            <th 
-                                                className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-900 bg-slate-100/50 cursor-pointer hover:bg-slate-200/50 border-r border-slate-200 group leading-tight"
-                                                onClick={() => handleSort('code')}
-                                                title="ดัชนีชี้วัดความจำเป็นในการสั่งซื้อ (สต็อก / Lead Time)"
-                                            >
-                                                <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-                                                    ดัชนีสั่งซื้อ
-                                                    <span className="text-slate-400 group-hover:text-slate-600">
-                                                        {sortBy === 'code' ? (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600" /> : <ArrowDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600" />) : <ArrowUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />}
-                                                    </span>
-                                                </div>
-                                            </th>
-
-                                            {/* Aging & Color Codes (+50%) */}
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-fuchsia-700 bg-fuchsia-50/40 leading-tight">เฉลี่ย/เดือน<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(+50%)</span></th>
-                                            <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-fuchsia-700 bg-fuchsia-50/40 leading-tight" title="คาดการณ์ระยะเวลาที่สต็อกจะอยู่ได้ หากยอดขายเพิ่ม 50%">คาดการณ์คงเหลือ<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(+50%)</span></th>
-                                            <th 
-                                                className="py-3 sm:py-4 px-2 sm:px-3 text-center text-fuchsia-900 bg-fuchsia-100/50 cursor-pointer hover:bg-fuchsia-200/50 group leading-tight"
-                                                onClick={() => handleSort('code50')}
-                                                title="ดัชนีชี้วัดความจำเป็นในการสั่งซื้อ หากยอดขายเพิ่ม 50%"
-                                            >
-                                                <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-                                                    ดัชนีสั่งซื้อ<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(+50%)</span>
-                                                    <span className="text-fuchsia-400 group-hover:text-fuchsia-600">
-                                                        {sortBy === 'code50' ? (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-fuchsia-600" /> : <ArrowDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-fuchsia-600" />) : <ArrowUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />}
-                                                    </span>
-                                                </div>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 text-[12px] sm:text-[13px]">
-                                        {processedData.length > 0 ? (
-                                            processedData.map((item) => {
-                                                const isLowStock = item.total > 0 && item.total < threshold;
-                                                const isOutOfStock = item.total === 0;
-
-                                                return (
-                                                    <tr 
-                                                        key={item.id} 
-                                                        className={`group transition-colors duration-150 ${
-                                                            isOutOfStock ? 'bg-red-50/40 hover:bg-red-50/80' : 
-                                                            isLowStock ? 'bg-amber-50/40 hover:bg-amber-50/80' : 
-                                                            'hover:bg-slate-50/80'
-                                                        }`}
+                                                
+                                                {/* Dynamic Usage View */}
+                                                {usageView === 'monthly' ? (
+                                                    MONTH_LABELS.map((label, idx) => (
+                                                        <th key={idx} className={`py-3 sm:py-4 px-1.5 sm:px-2 text-center text-teal-700 bg-teal-50/40 ${idx === 5 ? 'border-r border-slate-200' : ''}`}>
+                                                            <div className="flex flex-col items-center leading-tight">
+                                                                <span className="whitespace-nowrap">{label.split(' ')[0]}</span>
+                                                                <span className="text-[8px] sm:text-[9px] font-normal opacity-70">{label.split(' ')[1]}</span>
+                                                            </div>
+                                                        </th>
+                                                    ))
+                                                ) : (
+                                                    <th 
+                                                        className="py-3 sm:py-4 px-2 sm:px-4 text-center text-teal-700 bg-teal-50/60 cursor-pointer hover:bg-teal-100/60 transition-colors border-r border-slate-200 group"
+                                                        onClick={() => handleSort(usageView === 'average' ? 'avgMonthly' : 'usage6m')}
                                                     >
-                                                        {/* Sticky No. */}
-                                                        <td className={`py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-400 font-eng text-[10px] sm:text-xs sticky left-0 z-10 border-r border-slate-100/50 ${
-                                                            isOutOfStock ? 'bg-red-50/90 group-hover:bg-red-100/80' : 
-                                                            isLowStock ? 'bg-amber-50/90 group-hover:bg-amber-100/80' : 
-                                                            'bg-white group-hover:bg-slate-50'
-                                                        }`}>{item.id}</td>
-                                                        
-                                                        {/* Sticky Name */}
-                                                        <td className={`py-2.5 sm:py-3 px-3 sm:px-4 font-semibold text-slate-700 sticky left-10 sm:left-12 z-10 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.03)] border-r border-slate-200/60 font-eng ${
-                                                            isOutOfStock ? 'bg-red-50/90 group-hover:bg-red-100/80' : 
-                                                            isLowStock ? 'bg-amber-50/90 group-hover:bg-amber-100/80' : 
-                                                            'bg-white group-hover:bg-slate-50'
-                                                        }`}>
-                                                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
-                                                                <span>{item.model}</span>
-                                                                <div className="flex gap-1">
-                                                                    {isOutOfStock && <span className="inline-block text-[9px] sm:text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded shadow-sm">หมด</span>}
-                                                                    {isLowStock && <span className="inline-block text-[9px] sm:text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded shadow-sm">ใกล้หมด</span>}
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        
-                                                        {/* Breakdown */}
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-500 font-eng tabular-nums">{item.warehouse}</td>
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-500 font-eng tabular-nums">{item.ready}</td>
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-400 font-eng tabular-nums">{item.defect > 0 ? <span className="text-orange-500 font-medium">{item.defect}</span> : 0}</td>
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-400 font-eng tabular-nums border-r border-slate-200/60">{item.floating > 0 ? <span className="text-indigo-500 font-medium">{item.floating}</span> : 0}</td>
-                                                        
-                                                        {/* Total */}
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-4 text-center border-r border-slate-200/60">
-                                                            <span className={`inline-flex items-center justify-center min-w-[2rem] sm:min-w-[2.5rem] py-0.5 sm:py-1 px-2 sm:px-2.5 rounded-md font-bold font-eng tabular-nums shadow-sm text-[11px] sm:text-[13px] ${
-                                                                isOutOfStock ? 'bg-red-500 text-white' :
-                                                                isLowStock ? 'bg-amber-500 text-white' :
-                                                                'bg-slate-800 text-white'
-                                                            }`}>
-                                                                {item.total}
+                                                        <div className="flex items-center justify-center gap-1 sm:gap-1.5">
+                                                            <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-70 hidden sm:block" />
+                                                            {usageView === 'average' ? 'ยอดเฉลี่ย/ด.' : 'ยอดรวม 6M'}
+                                                            <span className="text-teal-400 group-hover:text-teal-600">
+                                                                {(sortBy === 'usage6m' || sortBy === 'avgMonthly') ? (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <ArrowDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />) : <ArrowUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />}
                                                             </span>
-                                                        </td>
-                                                        
-                                                        {/* Dynamic Usage */}
-                                                        {usageView === 'monthly' ? (
-                                                            item.history.map((val, idx) => (
-                                                                <td key={idx} className={`py-2.5 sm:py-3 px-1.5 sm:px-2 text-center font-eng tabular-nums text-slate-600 bg-teal-50/20 ${idx === 5 ? 'border-r border-slate-200/60' : ''}`}>
-                                                                    {val > 0 ? val : <span className="text-slate-300">-</span>}
-                                                                </td>
-                                                            ))
-                                                        ) : (
-                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-4 text-center text-teal-700 font-bold font-eng tabular-nums bg-teal-50/40 border-r border-slate-200/60 text-[11px] sm:text-[13px]">
-                                                                {usageView === 'average' ? item.avgMonthly.toFixed(1) : item.usage6m}
-                                                            </td>
-                                                        )}
-
-                                                        {/* Lead Time */}
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-600 font-eng border-r border-slate-200/60 tabular-nums">{item.leadTime}</td>
-                                                        
-                                                        {/* Normal Scenario Data */}
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-500 font-eng tabular-nums bg-slate-50/40">
-                                                            {item.avgMonthly > 0 ? item.avgMonthly.toFixed(1) : '-'}
-                                                        </td>
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-500 font-eng tabular-nums bg-slate-50/40">
-                                                            {isFinite(item.aging) ? item.aging.toFixed(1) : '-'}
-                                                        </td>
-                                                        <td className="py-2.5 sm:py-3 px-1 sm:px-3 text-center border-r border-slate-200/60 bg-slate-50/40">
-                                                            <div className={`mx-auto inline-flex items-center justify-center min-w-[3rem] sm:min-w-[3.5rem] py-0.5 sm:py-1 px-1.5 sm:px-2 rounded font-bold text-[10px] sm:text-xs font-eng border ${getColorCodeStyle(item.code)}`}>
-                                                                {isFinite(item.code) ? item.code.toFixed(2) : '-'}
-                                                            </div>
-                                                        </td>
-
-                                                        {/* +50% Scenario Data */}
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-fuchsia-700/80 font-eng tabular-nums bg-fuchsia-50/30">
-                                                            {item.avgMonthly50 > 0 ? item.avgMonthly50.toFixed(1) : '-'}
-                                                        </td>
-                                                        <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-fuchsia-700/80 font-eng tabular-nums bg-fuchsia-50/30">
-                                                            {isFinite(item.aging50) ? item.aging50.toFixed(1) : '-'}
-                                                        </td>
-                                                        <td className="py-2.5 sm:py-3 px-1 sm:px-3 text-center bg-fuchsia-50/30">
-                                                            <div className={`mx-auto inline-flex items-center justify-center min-w-[3rem] sm:min-w-[3.5rem] py-0.5 sm:py-1 px-1.5 sm:px-2 rounded font-bold text-[10px] sm:text-xs font-eng border ${getColorCodeStyle(item.code50)}`}>
-                                                                {isFinite(item.code50) ? item.code50.toFixed(2) : '-'}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        ) : (
-                                            <tr>
-                                                <td colSpan="20" className="p-10 sm:p-16 text-center">
-                                                    <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 text-slate-400">
-                                                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-100 flex items-center justify-center mb-1 sm:mb-2">
-                                                            <Search className="w-6 h-6 sm:w-8 sm:h-8 opacity-40" />
                                                         </div>
-                                                        <p className="text-base sm:text-lg font-medium text-slate-500">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</p>
-                                                        <p className="text-xs sm:text-sm">ลองเปลี่ยนคำค้นหา หรือปิดตัวกรองสินค้าใกล้หมด</p>
+                                                    </th>
+                                                )}
+
+                                                {/* Lead Time */}
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600 border-r border-slate-200">Lead Time<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(เดือน)</span></th>
+                                                
+                                                {/* Aging & Color Codes */}
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600 bg-slate-50/50 leading-tight">เฉลี่ย/เดือน<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(ปกติ)</span></th>
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-600 bg-slate-50/50 leading-tight" title="คาดการณ์ระยะเวลาที่สต็อกจะอยู่ได้ (เดือน)">คาดการณ์คงเหลือ<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(เดือน)</span></th>
+                                                <th 
+                                                    className="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-900 bg-slate-100/50 cursor-pointer hover:bg-slate-200/50 border-r border-slate-200 group leading-tight"
+                                                    onClick={() => handleSort('code')}
+                                                    title="ดัชนีชี้วัดความจำเป็นในการสั่งซื้อ (สต็อกคงเหลือ / Lead Time)"
+                                                >
+                                                    <div className="flex items-center justify-center gap-1 sm:gap-1.5">
+                                                        ดัชนีสั่งซื้อ
+                                                        <span className="text-slate-400 group-hover:text-slate-600">
+                                                            {sortBy === 'code' ? (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600" /> : <ArrowDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600" />) : <ArrowUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />}
+                                                        </span>
                                                     </div>
-                                                </td>
+                                                </th>
+
+                                                {/* Aging & Color Codes (+50%) */}
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-fuchsia-700 bg-fuchsia-50/40 leading-tight">เฉลี่ย/เดือน<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(+50%)</span></th>
+                                                <th className="py-3 sm:py-4 px-2 sm:px-3 text-center text-fuchsia-700 bg-fuchsia-50/40 leading-tight" title="คาดการณ์ระยะเวลาที่สต็อกจะอยู่ได้ หากยอดขายเพิ่ม 50%">คาดการณ์คงเหลือ<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(+50%)</span></th>
+                                                <th 
+                                                    className="py-3 sm:py-4 px-2 sm:px-3 text-center text-fuchsia-900 bg-fuchsia-100/50 cursor-pointer hover:bg-fuchsia-200/50 group leading-tight"
+                                                    onClick={() => handleSort('code50')}
+                                                    title="ดัชนีชี้วัดความจำเป็นในการสั่งซื้อ หากยอดขายเพิ่ม 50%"
+                                                >
+                                                    <div className="flex items-center justify-center gap-1 sm:gap-1.5">
+                                                        ดัชนีสั่งซื้อ<br/><span className="text-[8px] sm:text-[9px] font-normal opacity-70">(+50%)</span>
+                                                        <span className="text-fuchsia-400 group-hover:text-fuchsia-600">
+                                                            {sortBy === 'code50' ? (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-fuchsia-600" /> : <ArrowDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-fuchsia-600" />) : <ArrowUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />}
+                                                        </span>
+                                                    </div>
+                                                </th>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            {/* Table Footer */}
-                            <div className="bg-slate-50/90 border-t border-slate-200/60 p-3 sm:p-4 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-medium text-slate-500">
-                                <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4">
-                                    <span className="flex items-center gap-1 sm:gap-1.5"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] bg-red-50 border border-red-300"></div> ต้องสั่งเพิ่ม (&lt; 0.75)</span>
-                                    <span className="flex items-center gap-1 sm:gap-1.5"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] bg-amber-50 border border-amber-300"></div> เฝ้าระวัง (0.75 - 1.24)</span>
-                                    <span className="flex items-center gap-1 sm:gap-1.5"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] bg-emerald-50 border border-emerald-300"></div> ปกติ (≥ 1.25)</span>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 text-[12px] sm:text-[13px]">
+                                            {processedData.length > 0 ? (
+                                                processedData.map((item) => {
+                                                    const isLowStock = item.total > 0 && item.total < threshold;
+                                                    const isOutOfStock = item.total === 0;
+
+                                                    return (
+                                                        <tr 
+                                                            key={item.id} 
+                                                            className={`group transition-colors duration-150 ${
+                                                                isOutOfStock ? 'bg-red-50/40 hover:bg-red-50/80' : 
+                                                                isLowStock ? 'bg-amber-50/40 hover:bg-amber-50/80' : 
+                                                                'hover:bg-slate-50/80'
+                                                            }`}
+                                                        >
+                                                            {/* Sticky No. */}
+                                                            <td className={`py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-400 font-eng text-[10px] sm:text-xs sticky left-0 z-10 border-r border-slate-100/50 ${
+                                                                isOutOfStock ? 'bg-red-50/90 group-hover:bg-red-100/80' : 
+                                                                isLowStock ? 'bg-amber-50/90 group-hover:bg-amber-100/80' : 
+                                                                'bg-white group-hover:bg-slate-50'
+                                                            }`}>{item.id}</td>
+                                                            
+                                                            {/* Sticky Name */}
+                                                            <td className={`py-2.5 sm:py-3 px-3 sm:px-4 font-semibold text-slate-700 sticky left-10 sm:left-12 z-10 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.03)] border-r border-slate-200/60 font-eng ${
+                                                                isOutOfStock ? 'bg-red-50/90 group-hover:bg-red-100/80' : 
+                                                                isLowStock ? 'bg-amber-50/90 group-hover:bg-amber-100/80' : 
+                                                                'bg-white group-hover:bg-slate-50'
+                                                            }`}>
+                                                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
+                                                                    <span>{item.model}</span>
+                                                                    <div className="flex gap-1">
+                                                                        {isOutOfStock && <span className="inline-block text-[9px] sm:text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded shadow-sm">หมด</span>}
+                                                                        {isLowStock && <span className="inline-block text-[9px] sm:text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded shadow-sm">ใกล้หมด</span>}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            
+                                                            {/* Breakdown */}
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-500 font-eng tabular-nums">{item.warehouse}</td>
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-500 font-eng tabular-nums">{item.ready}</td>
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-400 font-eng tabular-nums">{item.defect > 0 ? <span className="text-orange-500 font-medium">{item.defect}</span> : 0}</td>
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-400 font-eng tabular-nums border-r border-slate-200/60">{item.floating > 0 ? <span className="text-indigo-500 font-medium">{item.floating}</span> : 0}</td>
+                                                            
+                                                            {/* Total */}
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-4 text-center border-r border-slate-200/60">
+                                                                <span className={`inline-flex items-center justify-center min-w-[2rem] sm:min-w-[2.5rem] py-0.5 sm:py-1 px-2 sm:px-2.5 rounded-md font-bold font-eng tabular-nums shadow-sm text-[11px] sm:text-[13px] ${
+                                                                    isOutOfStock ? 'bg-red-500 text-white' :
+                                                                    isLowStock ? 'bg-amber-500 text-white' :
+                                                                    'bg-slate-800 text-white'
+                                                                }`}>
+                                                                    {item.total}
+                                                                </span>
+                                                            </td>
+                                                            
+                                                            {/* Dynamic Usage */}
+                                                            {usageView === 'monthly' ? (
+                                                                item.history.map((val, idx) => (
+                                                                    <td key={idx} className={`py-2.5 sm:py-3 px-1.5 sm:px-2 text-center font-eng tabular-nums text-slate-600 bg-teal-50/20 ${idx === 5 ? 'border-r border-slate-200/60' : ''}`}>
+                                                                        {val > 0 ? val : <span className="text-slate-300">-</span>}
+                                                                    </td>
+                                                                ))
+                                                            ) : (
+                                                                <td className="py-2.5 sm:py-3 px-2 sm:px-4 text-center text-teal-700 font-bold font-eng tabular-nums bg-teal-50/40 border-r border-slate-200/60 text-[11px] sm:text-[13px]">
+                                                                    {usageView === 'average' ? item.avgMonthly.toFixed(1) : item.usage6m}
+                                                                </td>
+                                                            )}
+
+                                                            {/* Lead Time */}
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-600 font-eng border-r border-slate-200/60 tabular-nums">{item.leadTime}</td>
+                                                            
+                                                            {/* Normal Scenario Data */}
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-500 font-eng tabular-nums bg-slate-50/40">
+                                                                {item.avgMonthly > 0 ? item.avgMonthly.toFixed(1) : '-'}
+                                                            </td>
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-slate-500 font-eng tabular-nums bg-slate-50/40">
+                                                                {isFinite(item.aging) ? item.aging.toFixed(1) : '-'}
+                                                            </td>
+                                                            <td className="py-2.5 sm:py-3 px-1 sm:px-3 text-center border-r border-slate-200/60 bg-slate-50/40">
+                                                                <div className={`mx-auto inline-flex items-center justify-center min-w-[3rem] sm:min-w-[3.5rem] py-0.5 sm:py-1 px-1.5 sm:px-2 rounded font-bold text-[10px] sm:text-xs font-eng border ${getColorCodeStyle(item.code)}`}>
+                                                                    {isFinite(item.code) ? item.code.toFixed(2) : '-'}
+                                                                </div>
+                                                            </td>
+
+                                                            {/* +50% Scenario Data */}
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-fuchsia-700/80 font-eng tabular-nums bg-fuchsia-50/30">
+                                                                {item.avgMonthly50 > 0 ? item.avgMonthly50.toFixed(1) : '-'}
+                                                            </td>
+                                                            <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center text-fuchsia-700/80 font-eng tabular-nums bg-fuchsia-50/30">
+                                                                {isFinite(item.aging50) ? item.aging50.toFixed(1) : '-'}
+                                                            </td>
+                                                            <td className="py-2.5 sm:py-3 px-1 sm:px-3 text-center bg-fuchsia-50/30">
+                                                                <div className={`mx-auto inline-flex items-center justify-center min-w-[3rem] sm:min-w-[3.5rem] py-0.5 sm:py-1 px-1.5 sm:px-2 rounded font-bold text-[10px] sm:text-xs font-eng border ${getColorCodeStyle(item.code50)}`}>
+                                                                    {isFinite(item.code50) ? item.code50.toFixed(2) : '-'}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="20" className="p-10 sm:p-16 text-center">
+                                                        <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 text-slate-400">
+                                                            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-100 flex items-center justify-center mb-1 sm:mb-2">
+                                                                <Search className="w-6 h-6 sm:w-8 sm:h-8 opacity-40" />
+                                                            </div>
+                                                            <p className="text-base sm:text-lg font-medium text-slate-500">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</p>
+                                                            <p className="text-xs sm:text-sm">ลองเปลี่ยนคำค้นหา หรือปิดตัวกรองสินค้าใกล้หมด</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div className="text-center sm:text-right">
-                                    แสดงข้อมูล <strong className="text-slate-700 font-eng">{processedData.length}</strong> จาก <span className="font-eng">{INITIAL_DATA.length}</span> รายการ
+                                
+                                {/* Table Footer (Included in PDF) */}
+                                <div className="bg-slate-50/90 border-t border-slate-200/60 p-3 sm:p-4 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-medium text-slate-500">
+                                    <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4">
+                                        <span className="flex items-center gap-1 sm:gap-1.5"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] bg-red-50 border border-red-300"></div> ต้องสั่งเพิ่ม (&lt; 0.75)</span>
+                                        <span className="flex items-center gap-1 sm:gap-1.5"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] bg-amber-50 border border-amber-300"></div> เฝ้าระวัง (0.75 - 1.24)</span>
+                                        <span className="flex items-center gap-1 sm:gap-1.5"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] bg-emerald-50 border border-emerald-300"></div> ปกติ (≥ 1.25)</span>
+                                    </div>
+                                    <div className="text-center sm:text-right">
+                                        แสดงข้อมูล <strong className="text-slate-700 font-eng">{processedData.length}</strong> จาก <span className="font-eng">{INITIAL_DATA.length}</span> รายการ
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             );
