@@ -56,7 +56,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
+<body class="bg-slate-50 text-slate-800 selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden font-bold">
 
     <div id="root"></div>
 
@@ -79,7 +79,6 @@
 
         // --- Constants ---
         const DEFAULT_MONTHS = ['มี.ค. 69', 'ก.พ. 69', 'ม.ค. 69', 'ธ.ค. 68', 'พ.ย. 68', 'ต.ค. 68'];
-        const READY_LOW_LIMIT = 5; 
 
         const INITIAL_DATA_SOURCE = [
             { id: 1, model: '13F-WB', warehouse: 60, ready: 2, defect: 54, floating: 0, history: [21, 14, 18, 12, 13, 10], leadTime: 3, isDiscontinued: false },
@@ -202,7 +201,10 @@
                     const aging50 = avg50 > 0 ? total / avg50 : (total > 0 ? 99 : 0);
                     const code50 = item.leadTime > 0 ? aging50 / item.leadTime : 0;
 
-                    return { ...item, total, usageTotal, avgNormal, aging, code, avg50, aging50, code50 };
+                    // คำนวณความต้องการพร้อมขาย (ควรมีอย่างน้อยเท่ากับยอดขายเฉลี่ยรายเดือน)
+                    const targetReady = Math.ceil(avgNormal);
+
+                    return { ...item, total, usageTotal, avgNormal, aging, code, avg50, aging50, code50, targetReady };
                 });
             }, [data, monthLabels]);
 
@@ -244,13 +246,13 @@
             const discontinuedItems = useMemo(() => data.filter(i => i.isDiscontinued), [data]);
 
             return (
-                <div className="min-h-screen bg-slate-50 pb-20 relative font-thai">
+                <div className="min-h-screen bg-slate-50 pb-20 relative">
                     
                     {/* --- Modals --- */}
                     {showAddMonthModal && (
                         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
                             <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-modal p-8 space-y-6">
-                                <h3 className="text-xl font-black text-slate-900 flex items-center gap-3">เพิ่มเดือนใหม่</h3>
+                                <h3 className="text-xl font-black text-slate-900 flex items-center gap-3 font-bold">เพิ่มเดือนใหม่</h3>
                                 <input type="text" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 font-bold outline-none focus:border-indigo-500" placeholder="เม.ย. 69" value={newMonthName} onChange={(e) => setNewMonthName(e.target.value)} />
                                 <button onClick={handleAddNewMonth} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">ตกลง</button>
                                 <button onClick={() => setShowAddMonthModal(false)} className="w-full text-slate-400 font-bold">ยกเลิก</button>
@@ -260,7 +262,7 @@
 
                     {showAddModal && (
                         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                            <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-modal p-8 space-y-6">
+                            <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-modal p-8 space-y-6 font-bold">
                                 <h3 className="text-xl font-black text-slate-900">เพิ่มสินค้าใหม่</h3>
                                 <input type="text" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 font-bold outline-none focus:border-emerald-500" placeholder="ชื่อรุ่นสินค้า" value={newProductName} onChange={(e) => setNewProductName(e.target.value)} />
                                 <button onClick={handleAddNewProduct} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-lg">เพิ่มสินค้า</button>
@@ -271,13 +273,13 @@
 
                     {editingProduct && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                            <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-modal p-8 space-y-6">
+                            <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-modal p-8 space-y-6 font-bold">
                                 <div className="flex justify-between items-center border-b pb-4">
                                     <h3 className="text-xl font-black text-slate-900 truncate pr-4">แก้ไขชื่อสินค้า</h3>
                                     <button onClick={() => setEditingProduct(null)}><X className="w-6 h-6 text-slate-300" /></button>
                                 </div>
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
+                                <div className="space-y-4 font-bold">
+                                    <div className="space-y-2 font-bold">
                                         <label className="text-[10px] font-black uppercase text-slate-400">ชื่อสินค้า / รุ่น</label>
                                         <input 
                                             type="text" 
@@ -311,7 +313,7 @@
                             <button onClick={() => setActiveTab('report')} className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'report' ? 'bg-white shadow-md text-indigo-700' : 'text-slate-500'}`}>แดชบอร์ด</button>
                             <button onClick={() => setActiveTab('manage')} className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'manage' ? 'bg-white shadow-md text-indigo-700' : 'text-slate-500'}`}>จัดการข้อมูล</button>
                         </div>
-                        <div className="hidden md:block">
+                        <div className="hidden md:block font-bold">
                             <p className="text-sm font-black text-emerald-600 flex items-center gap-1 font-bold">
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> ออนไลน์
                             </p>
@@ -323,32 +325,32 @@
                             <div className="space-y-6 animate-in fade-in">
                                 <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                                     <div className="space-y-1">
-                                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">รายงานสรุปสต็อกสินค้า</h1>
-                                        <p className="text-slate-500 font-medium italic text-sm text-slate-400">ข้อมูลล่าสุดจากตารางจัดการข้อมูล</p>
+                                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-bold">รายงานสรุปสต็อกสินค้า</h1>
+                                        <p className="text-slate-500 font-medium italic text-sm text-slate-400">ข้อมูลคำนวณตามยอดขายเฉลี่ยรายเดือน</p>
                                     </div>
 
                                     {/* --- STATS CARDS --- */}
                                     <div className="flex gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 font-bold">
-                                        <div className="flex-1 min-w-[140px] lg:min-w-[160px] bg-blue-50 border border-blue-100 rounded-[1.5rem] p-4 shadow-sm">
+                                        <div className="flex-1 min-w-[140px] lg:min-w-[160px] bg-blue-50 border border-blue-100 rounded-[1.5rem] p-4 shadow-sm font-bold">
                                             <div className="flex items-center gap-2 mb-1 text-slate-500">
-                                                <CheckCircle2 className="w-4 h-4 text-blue-500" />
-                                                <span className="text-[12px]">รายการที่ขาย</span>
+                                                <CheckCircle2 className="w-4 h-4 text-blue-500 font-bold" />
+                                                <span className="text-[12px] font-bold">รายการที่ขาย</span>
                                             </div>
                                             <span className="text-3xl font-black text-slate-800">{stats.total}</span>
                                         </div>
                                         <div className="flex-1 min-w-[140px] lg:min-w-[160px] bg-amber-50 border border-amber-100 rounded-[1.5rem] p-4 shadow-sm">
                                             <div className="flex items-center gap-2 mb-1 text-amber-700">
-                                                <AlertTriangle className="w-4 h-4" />
-                                                <span className="text-[12px] whitespace-nowrap">สต็อกต่ำ (&lt;{threshold})</span>
+                                                <AlertTriangle className="w-4 h-4 font-bold" />
+                                                <span className="text-[12px] whitespace-nowrap font-bold">สต็อกต่ำ (&lt;{threshold})</span>
                                             </div>
-                                            <span className="text-3xl font-black text-amber-700">{stats.low}</span>
+                                            <span className="text-3xl font-black text-amber-700 font-bold">{stats.low}</span>
                                         </div>
                                         <div className="flex-1 min-w-[140px] lg:min-w-[160px] bg-red-50 border border-red-100 rounded-[1.5rem] p-4 shadow-sm">
-                                            <div className="flex items-center gap-2 mb-1 text-red-700">
-                                                <AlertCircle className="w-4 h-4" />
-                                                <span className="text-[12px]">สินค้าหมด (0)</span>
+                                            <div className="flex items-center gap-2 mb-1 text-red-700 font-bold">
+                                                <AlertCircle className="w-4 h-4 font-bold" />
+                                                <span className="text-[12px] font-bold">สินค้าหมด (0)</span>
                                             </div>
-                                            <span className="text-3xl font-black text-red-800">{stats.out}</span>
+                                            <span className="text-3xl font-black text-red-800 font-bold">{stats.out}</span>
                                         </div>
                                     </div>
                                 </header>
@@ -356,134 +358,142 @@
                                 {/* --- CONTROL BAR --- */}
                                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
                                     <div className="relative flex-1 group w-full">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-indigo-500 transition-colors" />
-                                        <input type="text" placeholder="ค้นหาชื่อสินค้า..." className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 font-bold text-sm transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-indigo-500 transition-colors font-bold" />
+                                        <input type="text" placeholder="ค้นหาชื่อสินค้า..." className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 font-bold text-sm transition-all font-bold" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                                     </div>
                                     
-                                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto font-bold">
-                                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden h-12 font-bold">
+                                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto font-bold font-bold">
+                                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden h-12 font-bold font-bold">
                                             <span className="px-4 text-[13px] font-bold text-slate-600 border-r border-slate-200 h-full flex items-center whitespace-nowrap uppercase">แจ้งเตือน &lt;</span>
-                                            <input type="number" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} className="w-16 bg-transparent text-center font-black text-indigo-700 outline-none font-eng" />
+                                            <input type="number" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} className="w-16 bg-transparent text-center font-black text-indigo-700 outline-none font-eng font-bold" />
                                         </div>
 
-                                        <button onClick={() => setLowStockOnly(!lowStockOnly)} className={`h-12 px-5 rounded-xl font-bold text-sm border flex items-center gap-2 ${lowStockOnly ? 'bg-indigo-600 text-white border-indigo-700 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
-                                            <AlertTriangle className={`w-4 h-4 ${lowStockOnly ? 'text-white' : 'text-slate-500'}`} /> สต็อกเหลือน้อย
+                                        <button onClick={() => setLowStockOnly(!lowStockOnly)} className={`h-12 px-5 rounded-xl font-bold text-sm border flex items-center gap-2 font-bold ${lowStockOnly ? 'bg-indigo-600 text-white border-indigo-700 shadow-md font-bold' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 font-bold'}`}>
+                                            <AlertTriangle className={`w-4 h-4 font-bold ${lowStockOnly ? 'text-white font-bold' : 'text-slate-500 font-bold'}`} /> สต็อกเหลือน้อย
                                         </button>
 
-                                        <div className="flex bg-slate-100 p-1.5 rounded-xl gap-1">
+                                        <div className="flex bg-slate-100 p-1.5 rounded-xl gap-1 font-bold">
                                             {[
                                                 { id: 'total', label: `รวม ${monthLabels.length}M` },
                                                 { id: 'average', label: 'เฉลี่ย/ด.' },
                                                 { id: 'monthly', label: 'รายเดือน' }
                                             ].map(v => (
-                                                <button key={v.id} onClick={() => setUsageView(v.id)} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${usageView === v.id ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-800'}`}>
+                                                <button key={v.id} onClick={() => setUsageView(v.id)} className={`px-4 py-2 rounded-lg text-xs font-black transition-all font-bold ${usageView === v.id ? 'bg-white shadow-sm text-indigo-700 font-bold font-bold' : 'text-slate-500 hover:text-slate-800 font-bold'}`}>
                                                     {v.label}
                                                 </button>
                                             ))}
                                         </div>
 
-                                        <button onClick={handleExportPDF} disabled={isExporting} className="bg-slate-900 text-white h-12 px-6 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-slate-800 transition-all shadow-lg uppercase">
-                                            {isExporting ? <Loader2 className="w-4 h-4" /> : <Download className="w-4 h-4" />} PDF
+                                        <button onClick={handleExportPDF} disabled={isExporting} className="bg-slate-900 text-white h-12 px-6 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-slate-800 transition-all shadow-lg uppercase font-bold">
+                                            {isExporting ? <Loader2 className="w-4 h-4 font-bold" /> : <Download className="w-4 h-4 font-bold" />} PDF
                                         </button>
                                     </div>
                                 </div>
 
-                                <div ref={printRef} className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
-                                    <div className="overflow-x-auto custom-scrollbar table-container">
-                                        <table className="w-full text-left border-collapse min-w-[1300px]">
+                                <div ref={printRef} className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden font-bold">
+                                    <div className="overflow-x-auto custom-scrollbar table-container font-bold">
+                                        <table className="w-full text-left border-collapse min-w-[1300px] font-bold">
                                             <thead>
-                                                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                    <th className="py-6 px-6 sticky left-0 bg-slate-50 z-20 w-16 text-center">ลำดับ</th>
-                                                    <th className="py-6 px-6 sticky left-16 bg-slate-50 z-20 min-w-[200px] border-r shadow-[2px_0_5px_rgba(0,0,0,0.02)]">รุ่น / รายละเอียดสินค้า</th>
-                                                    <th className="py-6 px-3 text-center text-slate-600">โกดัง</th>
-                                                    <th className="py-6 px-3 text-center text-slate-800 bg-slate-100/50">พร้อมขาย</th>
-                                                    <th className="py-6 px-3 text-center text-orange-600">ตำหนิ</th>
-                                                    <th className="py-6 px-3 text-center text-indigo-600 border-r">ลูกลอย</th>
-                                                    <th className="py-6 px-4 text-center bg-indigo-50/40 border-r text-indigo-900 font-black text-[11px]">สต็อกรวม</th>
+                                                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold">
+                                                    <th className="py-6 px-6 sticky left-0 bg-slate-50 z-20 w-16 text-center font-bold">ลำดับ</th>
+                                                    <th className="py-6 px-6 sticky left-16 bg-slate-50 z-20 min-w-[200px] border-r shadow-[2px_0_5px_rgba(0,0,0,0.02)] font-bold">รุ่น / รายละเอียดสินค้า</th>
+                                                    <th className="py-6 px-3 text-center text-slate-600 font-bold">โกดัง</th>
+                                                    <th className="py-6 px-3 text-center text-slate-800 bg-slate-100/50 font-bold font-bold">พร้อมขาย</th>
+                                                    <th className="py-6 px-3 text-center text-orange-600 font-bold">ตำหนิ</th>
+                                                    <th className="py-6 px-3 text-center text-indigo-600 border-r font-bold">ลูกลอย</th>
+                                                    <th className="py-6 px-4 text-center bg-indigo-50/40 border-r text-indigo-900 font-black text-[11px] font-bold">สต็อกรวม</th>
                                                     
                                                     {usageView === 'monthly' ? (
-                                                        monthLabels.map((m, i) => <th key={i} className={`py-6 px-3 text-center text-teal-800 bg-teal-50/30 ${i === monthLabels.length -1 ? 'border-r' : ''}`}>{m}</th>)
+                                                        monthLabels.map((m, i) => <th key={i} className={`py-6 px-3 text-center text-teal-800 bg-teal-50/30 font-bold ${i === monthLabels.length -1 ? 'border-r' : ''}`}>{m}</th>)
                                                     ) : (
-                                                        <th className="py-6 px-4 text-center bg-emerald-50/40 border-r text-emerald-900 font-black">
+                                                        <th className="py-6 px-4 text-center bg-emerald-50/40 border-r text-emerald-900 font-black font-bold">
                                                             {usageView === 'average' ? 'ยอดขายเฉลี่ย' : `ยอดขายรวม (${monthLabels.length} ด.)`}
                                                         </th>
                                                     )}
                                                     
-                                                    <th className="py-6 px-3 text-center border-r font-eng text-slate-400 font-bold">L/T</th>
-                                                    <th className="py-6 px-3 text-center bg-slate-50 font-black text-slate-700 whitespace-nowrap">ขายได้อีก (ด.)</th>
+                                                    <th className="py-6 px-3 text-center border-r font-eng text-slate-400 font-bold font-bold">L/T</th>
+                                                    <th className="py-6 px-3 text-center bg-slate-50 font-black text-slate-700 whitespace-nowrap font-bold">ขายได้อีก (ด.)</th>
                                                     <th className="py-6 px-3 text-center bg-emerald-50 text-emerald-900 font-black font-bold">ดัชนี</th>
                                                     <th className="py-6 px-3 text-center bg-fuchsia-50 text-fuchsia-900 font-black font-bold">ดัชนี+50%</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100 text-[13px] font-bold">
+                                            <tbody className="divide-y divide-slate-100 text-[13px] font-bold font-bold">
                                                 {filteredData.map((item, idx) => {
-                                                    const isReadyLow = item.ready > 0 && item.ready < READY_LOW_LIMIT;
-                                                    const isReadyEmpty = item.ready === 0;
+                                                    // ตรรกะใหม่: ตรวจสอบสถานะพร้อมขายโดยอิงจาก "ยอดขายเฉลี่ย"
+                                                    const isOut = item.ready === 0;
+                                                    const isLow = item.ready > 0 && item.ready < item.targetReady;
                                                     const canModify = item.warehouse > 0;
 
                                                     return (
-                                                        <tr key={item.id} className={`${item.total === 0 ? 'bg-red-50/20' : (item.total < threshold ? 'bg-amber-50/10' : '')} hover:bg-slate-50 transition-colors`}>
-                                                            <td className="py-4 px-3 text-center text-slate-300 sticky left-0 bg-inherit font-eng">{idx + 1}</td>
-                                                            <td className="py-4 px-6 font-extrabold text-slate-700 sticky left-16 bg-inherit border-r">
-                                                                <div className="flex items-center gap-2">
+                                                        <tr key={item.id} className={`${item.total === 0 ? 'bg-red-50/20' : (item.total < threshold ? 'bg-amber-50/10' : '')} hover:bg-slate-50 transition-colors font-bold`}>
+                                                            <td className="py-4 px-3 text-center text-slate-300 sticky left-0 bg-inherit font-eng font-bold">{idx + 1}</td>
+                                                            <td className="py-4 px-6 font-extrabold text-slate-700 sticky left-16 bg-inherit border-r font-bold font-bold">
+                                                                <div className="flex items-center gap-2 font-bold font-bold">
                                                                     {item.model}
-                                                                    {/* --- แสดงสถานะหลังชื่อสินค้า --- */}
-                                                                    {item.total === 0 && <span className="px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-[9px] border border-red-200 font-black uppercase">หมด</span>}
-                                                                    {(item.total > 0 && item.total < threshold) && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] border border-amber-200 font-black uppercase">ใกล้หมด</span>}
-                                                                    {/* --------------------------- */}
+                                                                    {item.total === 0 && <span className="px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-[9px] border border-red-200 font-black uppercase font-bold font-bold">หมด</span>}
+                                                                    {(item.total > 0 && item.total < threshold) && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] border border-amber-200 font-black uppercase font-bold font-bold font-bold">ใกล้หมด</span>}
                                                                 </div>
                                                             </td>
-                                                            <td className={`py-4 px-3 text-center font-eng ${item.warehouse > 0 ? 'text-slate-600' : 'text-slate-300'}`}>
+                                                            <td className={`py-4 px-3 text-center font-eng font-bold ${item.warehouse > 0 ? 'text-slate-600 font-bold' : 'text-slate-300 font-bold'}`}>
                                                                 {item.warehouse}
                                                             </td>
                                                             
-                                                            <td className="py-4 px-3 text-center bg-slate-100/10 min-w-[120px]">
-                                                                <div className="flex flex-col items-center gap-1">
-                                                                    <span className={`text-base font-black font-eng ${isReadyEmpty ? 'text-red-600' : (isReadyLow ? 'text-orange-600' : 'text-slate-900')}`}>
+                                                            {/* คอลัมน์พร้อมขาย (คำนวณตามยอดขายเฉลี่ย) */}
+                                                            <td className="py-4 px-3 text-center bg-slate-100/10 min-w-[140px] font-bold">
+                                                                <div className="flex flex-col items-center gap-1 font-bold font-bold">
+                                                                    <span className={`text-base font-black font-eng font-bold ${isOut ? 'text-red-600 font-bold' : (isLow ? 'text-orange-600 font-bold' : 'text-slate-900 font-bold font-bold')}`}>
                                                                         {item.ready}
                                                                     </span>
-                                                                    {isReadyEmpty ? (
-                                                                        <span className="text-[9px] px-1.5 py-0.5 bg-red-600 text-white rounded-full flex items-center gap-1 animate-pulse font-black">
-                                                                            <AlertCircle className="w-2.5 h-2.5" /> เติมด่วน!
+                                                                    
+                                                                    {/* ข้อความแจ้งเตือนคำนวณจากยอดออกไป */}
+                                                                    {isOut ? (
+                                                                        <span className="text-[9px] px-1.5 py-0.5 bg-red-600 text-white rounded-full flex items-center gap-1 animate-pulse font-black font-bold">
+                                                                            <AlertCircle className="w-2.5 h-2.5 font-bold" /> ควรมี {item.targetReady}
                                                                         </span>
-                                                                    ) : (isReadyLow && (
-                                                                        <span className="text-[9px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full font-black">
-                                                                            เหลือน้อย (&lt;5)
-                                                                        </span>
-                                                                    ))}
-                                                                    {(isReadyLow || isReadyEmpty) && canModify && (
-                                                                        <span className="text-[9px] text-blue-600 flex items-center gap-0.5 mt-0.5 font-bold italic">
-                                                                            <Wrench className="w-2.5 h-2.5" /> ดึงโกดังมาโม
+                                                                    ) : isLow ? (
+                                                                        <div className="flex flex-col items-center gap-0">
+                                                                            <span className="text-[9px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full font-black font-bold">
+                                                                                ขาดอีก {item.targetReady - item.ready} ชิ้น
+                                                                            </span>
+                                                                        </div>
+                                                                    ) : item.targetReady > 0 && (
+                                                                        <span className="text-[9px] text-emerald-600 font-bold">พอกับยอดขาย</span>
+                                                                    )}
+
+                                                                    {/* แจ้งเตือนการดึงจากโกดัง */}
+                                                                    {(isOut || isLow) && canModify && (
+                                                                        <span className="text-[9px] text-blue-600 flex items-center gap-0.5 mt-0.5 font-bold italic font-bold">
+                                                                            <Wrench className="w-2.5 h-2.5 font-bold" /> ดึงโกดังมาโมด่วน
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                             </td>
 
-                                                            <td className="py-4 px-3 text-center text-orange-400 font-eng">{item.defect}</td>
-                                                            <td className="py-4 px-3 text-center text-indigo-400 font-eng border-r">{item.floating}</td>
-                                                            <td className="py-4 px-4 text-center border-r bg-indigo-50/10 font-black">
-                                                                <span className={`inline-flex items-center justify-center min-w-[36px] px-2 h-[24px] rounded text-white font-eng ${item.total === 0 ? 'bg-red-600' : (item.total < threshold ? 'bg-amber-500' : 'bg-slate-800')}`}>
+                                                            <td className="py-4 px-3 text-center text-orange-400 font-eng font-bold font-bold">{item.defect}</td>
+                                                            <td className="py-4 px-3 text-center text-indigo-400 font-eng border-r font-bold font-bold">{item.floating}</td>
+                                                            <td className="py-4 px-4 text-center border-r bg-indigo-50/10 font-black font-bold font-bold">
+                                                                <span className={`inline-flex items-center justify-center min-w-[36px] px-2 h-[24px] rounded text-white font-eng font-bold ${item.total === 0 ? 'bg-red-600 font-bold' : (item.total < threshold ? 'bg-amber-500 font-bold' : 'bg-slate-800 font-bold font-bold')}`}>
                                                                     {item.total}
                                                                 </span>
                                                             </td>
                                                             
                                                             {usageView === 'monthly' ? (
-                                                                item.history.map((val, i) => <td key={i} className={`py-4 px-3 text-center font-eng text-teal-700 bg-teal-50/10 ${i === monthLabels.length -1 ? 'border-r' : ''}`}>{val || 0}</td>)
+                                                                item.history.map((val, i) => <td key={i} className={`py-4 px-3 text-center font-eng text-teal-700 bg-teal-50/10 font-bold ${i === monthLabels.length -1 ? 'border-r font-bold' : ''}`}>{val || 0}</td>)
                                                             ) : (
-                                                                <td className="py-4 px-4 text-center border-r bg-emerald-50/10 text-emerald-800 font-eng">
+                                                                <td className="py-4 px-4 text-center border-r bg-emerald-50/10 text-emerald-800 font-eng font-bold">
                                                                     {usageView === 'average' ? item.avgNormal.toFixed(1) : item.usageTotal}
                                                                 </td>
                                                             )}
 
-                                                            <td className="py-4 px-3 text-center text-slate-300 border-r font-eng">{item.leadTime}</td>
-                                                            <td className="py-4 px-3 text-center text-slate-500 bg-slate-50/20 font-eng">{isFinite(item.aging) ? item.aging.toFixed(1) : '-'}</td>
-                                                            <td className="py-4 px-3 text-center">
-                                                                <div className={`mx-auto w-[52px] py-1 rounded-md border-2 font-black text-[11px] font-eng ${getColorCodeStyle(item.code)}`}>
+                                                            <td className="py-4 px-3 text-center text-slate-300 border-r font-eng font-bold">{item.leadTime}</td>
+                                                            <td className="py-4 px-3 text-center text-slate-500 bg-slate-50/20 font-eng font-bold font-bold">{isFinite(item.aging) ? item.aging.toFixed(1) : '-'}</td>
+                                                            <td className="py-4 px-3 text-center font-bold">
+                                                                <div className={`mx-auto w-[52px] py-1 rounded-md border-2 font-black text-[11px] font-eng font-bold ${getColorCodeStyle(item.code)}`}>
                                                                     {isFinite(item.code) ? item.code.toFixed(2) : '-'}
                                                                 </div>
                                                             </td>
-                                                            <td className="py-4 px-3 text-center bg-fuchsia-50/20">
-                                                                <div className={`mx-auto w-[52px] py-1 rounded-md border-2 font-black text-[11px] font-eng ${getColorCodeStyle(item.code50)}`}>
+                                                            <td className="py-4 px-3 text-center bg-fuchsia-50/20 font-bold">
+                                                                <div className={`mx-auto w-[52px] py-1 rounded-md border-2 font-black text-[11px] font-eng font-bold ${getColorCodeStyle(item.code50)}`}>
                                                                     {isFinite(item.code50) ? item.code50.toFixed(2) : '-'}
                                                                 </div>
                                                             </td>
@@ -500,54 +510,59 @@
                         {activeTab === 'manage' && (
                             <div className="space-y-8 animate-in fade-in">
                                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                                    <div>
-                                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">จัดการข้อมูลตาราง</h1>
-                                        <p className="text-slate-500 font-medium italic">ปรับแต่งตัวเลขสต็อกและประวัติการขายรายเดือน</p>
+                                    <div className="font-bold">
+                                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-bold">จัดการข้อมูลตาราง</h1>
+                                        <p className="text-slate-500 font-medium italic font-bold">ปรับแต่งตัวเลขสต็อกและประวัติการขายรายเดือน</p>
                                     </div>
-                                    <div className="flex gap-3">
-                                        <button onClick={() => setShowAddModal(true)} className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-emerald-100 transition-all shadow-sm font-bold"><Plus className="w-4 h-4" /> เพิ่มสินค้า</button>
-                                        <button onClick={() => setShowAddMonthModal(true)} className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-100 transition-all shadow-sm font-bold"><Calendar className="w-4 h-4" /> เพิ่มเดือนใหม่</button>
+                                    <div className="flex gap-3 font-bold font-bold">
+                                        <button onClick={() => setShowAddModal(true)} className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-emerald-100 transition-all shadow-sm font-bold font-bold font-bold"><Plus className="w-4 h-4 font-bold" /> เพิ่มสินค้า</button>
+                                        <button onClick={() => setShowAddMonthModal(true)} className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-100 transition-all shadow-sm font-bold font-bold font-bold"><Calendar className="w-4 h-4 font-bold" /> เพิ่มเดือนใหม่</button>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4 font-bold">
-                                    <h2 className="text-sm font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                    <h2 className="text-sm font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2 font-bold font-bold">
+                                        <div className="w-2 h-2 rounded-full bg-indigo-500 font-bold"></div>
                                         รายการสินค้าปัจจุบัน ({activeItems.length})
                                     </h2>
-                                    <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden font-bold">
-                                        <div className="overflow-x-auto custom-scrollbar table-container">
-                                            <table className="w-full text-left border-collapse min-w-[1400px]">
+                                    <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden font-bold font-bold">
+                                        <div className="overflow-x-auto custom-scrollbar table-container font-bold font-bold">
+                                            <table className="w-full text-left border-collapse min-w-[1400px] font-bold font-bold">
                                                 <thead>
-                                                    <tr className="bg-slate-50 border-b text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                                                        <th className="py-6 px-6 sticky left-0 bg-slate-50 z-20 border-r w-12 text-center font-eng font-bold">No.</th>
-                                                        <th className="py-6 px-6 sticky left-12 bg-slate-50 z-20 border-r min-w-[220px]">Model / Name</th>
-                                                        <th className="py-6 px-2 text-center text-slate-600">คลัง</th>
-                                                        <th className="py-6 px-2 text-center text-slate-900 bg-slate-100/50 font-bold">พร้อมขาย</th>
-                                                        <th className="py-6 px-2 text-center text-orange-600">ตำหนิ</th>
-                                                        <th className="py-6 px-2 text-center text-indigo-600 border-r font-eng">Floating</th>
-                                                        {monthLabels.map((m, i) => <th key={i} className="py-6 px-2 text-center text-indigo-900 bg-indigo-50/20 border-l">{m}</th>)}
+                                                    <tr className="bg-slate-50 border-b text-[10px] font-black uppercase text-slate-400 tracking-widest font-bold">
+                                                        <th className="py-6 px-6 sticky left-0 bg-slate-50 z-20 border-r w-12 text-center font-eng font-bold font-bold">No.</th>
+                                                        <th className="py-6 px-6 sticky left-12 bg-slate-50 z-20 border-r min-w-[220px] font-bold">Model / Name</th>
+                                                        <th className="py-6 px-2 text-center text-slate-600 font-bold">คลัง</th>
+                                                        <th className="py-6 px-2 text-center text-slate-900 bg-slate-100/50 font-black font-bold">พร้อมขาย</th>
+                                                        <th className="py-6 px-2 text-center text-orange-600 font-bold">ตำหนิ</th>
+                                                        <th className="py-6 px-2 text-center text-indigo-600 border-r font-eng font-bold font-bold">Floating</th>
+                                                        {monthLabels.map((m, i) => <th key={i} className="py-6 px-2 text-center text-indigo-900 bg-indigo-50/20 border-l font-bold">{m}</th>)}
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-slate-100 font-eng">
-                                                    {activeItems.map((item, idx) => (
-                                                        <tr key={item.id} className="hover:bg-slate-50 transition-colors group text-sm font-bold">
-                                                            <td className="py-3 px-3 sticky left-0 bg-white group-hover:bg-slate-50 z-10 text-center text-slate-300 font-eng font-bold">{idx + 1}</td>
-                                                            <td className="py-3 px-6 sticky left-12 bg-white group-hover:bg-slate-50 z-10 border-r shadow-[2px_0_5px_rgba(0,0,0,0.02)] relative group/item font-thai font-bold">
-                                                                <div className="flex items-center justify-between gap-4">
-                                                                    <span className="font-extrabold text-slate-800 truncate">{item.model}</span>
-                                                                    <button onClick={() => setEditingProduct({...item})} className="hidden group-hover/item:flex p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm font-eng"><Pencil className="w-3.5 h-3.5" /></button>
-                                                                </div>
-                                                            </td>
-                                                            <td className="py-3 px-1"><input type="number" value={item.warehouse} onChange={(e) => updateProductField(item.id, 'warehouse', e.target.value)} className="w-full text-center bg-white border border-slate-100 rounded-lg py-1 text-slate-500 font-bold" /></td>
-                                                            <td className="py-3 px-1 bg-slate-50/50"><input type="number" value={item.ready} onChange={(e) => updateProductField(item.id, 'ready', e.target.value)} className={`w-full text-center border rounded-lg py-1 font-bold ${item.ready < READY_LOW_LIMIT ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-white border-slate-100 text-slate-900'}`} /></td>
-                                                            <td className="py-3 px-1"><input type="number" value={item.defect} onChange={(e) => updateProductField(item.id, 'defect', e.target.value)} className="w-full text-center bg-white border border-slate-100 rounded-lg py-1 text-orange-500 font-bold" /></td>
-                                                            <td className="py-3 px-1 border-r"><input type="number" value={item.floating} onChange={(e) => updateProductField(item.id, 'floating', e.target.value)} className="w-full text-center bg-white border border-slate-100 rounded-lg py-1 text-indigo-500 font-bold" /></td>
-                                                            {item.history.map((val, hIdx) => (
-                                                                <td key={hIdx} className="py-3 px-1 border-l"><input type="number" value={val} onChange={(e) => updateHistoryField(item.id, hIdx, e.target.value)} className="w-full text-center bg-slate-50 border border-slate-200 rounded-lg py-1.5 text-indigo-700 font-bold" /></td>
-                                                            ))}
-                                                        </tr>
-                                                    ))}
+                                                <tbody className="divide-y divide-slate-100 font-eng font-bold font-bold">
+                                                    {activeItems.map((item, idx) => {
+                                                        const targetReady = Math.ceil((item.history || []).reduce((a, b) => a + b, 0) / monthLabels.length);
+                                                        const isLow = item.ready < targetReady;
+
+                                                        return (
+                                                            <tr key={item.id} className="hover:bg-slate-50 transition-colors group text-sm font-bold font-bold">
+                                                                <td className="py-3 px-3 sticky left-0 bg-white group-hover:bg-slate-50 z-10 text-center text-slate-300 font-eng font-bold font-bold">{idx + 1}</td>
+                                                                <td className="py-3 px-6 sticky left-12 bg-white group-hover:bg-slate-50 z-10 border-r shadow-[2px_0_5px_rgba(0,0,0,0.02)] relative group/item font-thai font-bold font-bold">
+                                                                    <div className="flex items-center justify-between gap-4 font-bold">
+                                                                        <span className="font-extrabold text-slate-800 truncate font-bold font-bold">{item.model}</span>
+                                                                        <button onClick={() => setEditingProduct({...item})} className="hidden group-hover/item:flex p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm font-eng font-bold"><Pencil className="w-3.5 h-3.5 font-bold" /></button>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="py-3 px-1"><input type="number" value={item.warehouse} onChange={(e) => updateProductField(item.id, 'warehouse', e.target.value)} className="w-full text-center bg-white border border-slate-100 rounded-lg py-1 text-slate-500 font-bold font-bold font-bold" /></td>
+                                                                <td className="py-3 px-1 bg-slate-50/50"><input type="number" value={item.ready} onChange={(e) => updateProductField(item.id, 'ready', e.target.value)} className={`w-full text-center border rounded-lg py-1 font-bold font-bold ${isLow ? 'bg-orange-50 border-orange-200 text-orange-700 font-bold' : 'bg-white border-slate-100 text-slate-900 font-bold font-bold'}`} /></td>
+                                                                <td className="py-3 px-1"><input type="number" value={item.defect} onChange={(e) => updateProductField(item.id, 'defect', e.target.value)} className="w-full text-center bg-white border border-slate-100 rounded-lg py-1 text-orange-500 font-bold font-bold font-bold" /></td>
+                                                                <td className="py-3 px-1 border-r"><input type="number" value={item.floating} onChange={(e) => updateProductField(item.id, 'floating', e.target.value)} className="w-full text-center bg-white border border-slate-100 rounded-lg py-1 text-indigo-500 font-bold font-bold font-bold" /></td>
+                                                                {item.history.map((val, hIdx) => (
+                                                                    <td key={hIdx} className="py-3 px-1 border-l font-bold"><input type="number" value={val} onChange={(e) => updateHistoryField(item.id, hIdx, e.target.value)} className="w-full text-center bg-slate-50 border border-slate-200 rounded-lg py-1.5 text-indigo-700 font-bold font-bold" /></td>
+                                                                ))}
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -556,27 +571,27 @@
 
                                 {/* Discontinued Section */}
                                 {discontinuedItems.length > 0 && (
-                                    <div className="space-y-4 pt-10 border-t-2 border-dashed border-slate-200 opacity-60 font-bold">
-                                        <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 font-bold">🛑 ยกเลิกจำหน่าย (เก็บประวัติ)</h2>
-                                        <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden font-bold">
-                                            <div className="overflow-x-auto custom-scrollbar table-container">
-                                                <table className="w-full text-left border-collapse min-w-[1400px]">
-                                                    <tbody className="divide-y divide-slate-100">
+                                    <div className="space-y-4 pt-10 border-t-2 border-dashed border-slate-200 opacity-60 font-bold font-bold">
+                                        <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 font-bold font-bold font-bold">🛑 ยกเลิกจำหน่าย (เก็บประวัติ)</h2>
+                                        <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden font-bold font-bold font-bold">
+                                            <div className="overflow-x-auto custom-scrollbar table-container font-bold font-bold font-bold">
+                                                <table className="w-full text-left border-collapse min-w-[1400px] font-bold font-bold font-bold">
+                                                    <tbody className="divide-y divide-slate-100 font-bold">
                                                         {discontinuedItems.map((item, idx) => (
-                                                            <tr key={item.id} className="hover:bg-slate-50 transition-colors group font-bold">
-                                                                <td className="py-3 px-6 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r w-12 text-center text-slate-300 font-eng font-bold">{idx + 1}</td>
-                                                                <td className="py-3 px-6 sticky left-12 bg-white group-hover:bg-slate-50 z-10 border-r min-w-[220px] relative group/item font-thai font-bold">
-                                                                    <div className="flex items-center justify-between gap-4">
-                                                                        <span className="font-bold text-slate-400 line-through truncate">{item.model}</span>
-                                                                        <button onClick={() => setEditingProduct({...item})} className="hidden group-hover/item:flex p-2 bg-slate-100 text-slate-400 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm font-eng"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <tr key={item.id} className="hover:bg-slate-50 transition-colors group font-bold font-bold font-bold">
+                                                                <td className="py-3 px-6 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r w-12 text-center text-slate-300 font-eng font-bold font-bold font-bold">{idx + 1}</td>
+                                                                <td className="py-3 px-6 sticky left-12 bg-white group-hover:bg-slate-50 z-10 border-r min-w-[220px] relative group/item font-thai font-bold font-bold font-bold">
+                                                                    <div className="flex items-center justify-between gap-4 font-bold">
+                                                                        <span className="font-bold text-slate-400 line-through truncate font-bold font-bold">{item.model}</span>
+                                                                        <button onClick={() => setEditingProduct({...item})} className="hidden group-hover/item:flex p-2 bg-slate-100 text-slate-400 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm font-eng font-bold"><Pencil className="w-3.5 h-3.5 font-bold" /></button>
                                                                     </div>
                                                                 </td>
-                                                                <td className="py-3 px-1 text-center text-slate-300 font-eng font-bold">{item.warehouse}</td>
-                                                                <td className="py-3 px-1 text-center text-slate-300 font-eng font-bold">{item.ready}</td>
-                                                                <td className="py-3 px-1 text-center text-slate-200 font-eng font-bold">{item.defect}</td>
-                                                                <td className="py-3 px-1 border-r text-center text-slate-200 font-eng font-bold">{item.floating}</td>
+                                                                <td className="py-3 px-1 text-center text-slate-300 font-eng font-bold font-bold font-bold font-bold">{item.warehouse}</td>
+                                                                <td className="py-3 px-1 text-center text-slate-300 font-eng font-bold font-bold font-bold font-bold">{item.ready}</td>
+                                                                <td className="py-3 px-1 text-center text-slate-200 font-eng font-bold font-bold font-bold font-bold">{item.defect}</td>
+                                                                <td className="py-3 px-1 border-r text-center text-slate-200 font-eng font-bold font-bold font-bold font-bold font-bold font-bold">{item.floating}</td>
                                                                 {item.history.map((val, hIdx) => (
-                                                                    <td key={hIdx} className={`py-3 px-1 border-l text-center text-slate-400 font-eng font-bold`}>{val}</td>
+                                                                    <td key={hIdx} className={`py-3 px-1 border-l text-center text-slate-400 font-eng font-bold font-bold font-bold font-bold`}>{val}</td>
                                                                 ))}
                                                             </tr>
                                                         ))}
